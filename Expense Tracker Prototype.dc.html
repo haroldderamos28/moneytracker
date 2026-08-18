@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<template id="__bundler_thumbnail">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#1f7a6e"/><text x="100" y="120" font-size="90" fill="#f2f4f3" text-anchor="middle" font-family="Arial">₱</text></svg>
+</template>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#1f7a6e">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js')); }</script>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body { margin: 0; background: #dcdde0; font-family: var(--font-body); }
+  a { color: var(--color-accent); }
+  a:hover { color: var(--color-accent-700); }
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 48px 20px;">
+  <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402,874">
+    <div style="position: relative; height: 100%; overflow: hidden; background: var(--color-bg); color: var(--color-text);">
+
+      <sc-if value="{{ showOnboarding }}" hint-placeholder-val="{{ true }}">
+        <div style="padding: 48px 24px 32px; box-sizing: border-box; height: 100%; display: flex; flex-direction: column; align-items: center;">
+          <div style="width: 100%; height: 380px; background: #c0c0c0; display: flex; align-items: center; justify-content: center; overflow: hidden; flex: none;">
+            <img src="./icon-192.png" alt="Phoenix" style="width: 100%; height: 100%; object-fit: contain;">
+          </div>
+          <div style="padding-top: var(--space-4); box-sizing: border-box; display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-6); width: 100%;">
+          <div>
+            <div style="font: 600 11px var(--font-heading); letter-spacing: .12em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 8px;">Welcome</div>
+            <h1 style="margin: 0 0 var(--space-3); font-size: 30px;">Track every peso you spend.</h1>
+            <p style="margin: 0; font-size: 14px; color: var(--color-neutral-700); max-width: 280px;">Categorize expenses, set budgets and watch your savings goals — all in one place.</p>
+          </div>
+          <button class="btn btn-primary btn-block" style="height: 48px; font-size: 15px;" onClick="{{ finishOnboarding }}">Get started</button>
+          <div style="font-family: var(--font-heading); font-weight: 800; font-size: 17px; letter-spacing: .06em; text-align: center; width: 100%; color: var(--color-accent-700); text-transform: uppercase;">Your financial freedom starts here</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ !showOnboarding }}" hint-placeholder-val="{{ false }}">
+        <div style="height: 100%; display: flex; flex-direction: column;">
+
+          <div style="flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;">
+
+            <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+              <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-6);">
+                  <div>
+                    <div style="font: 600 11px var(--font-heading); letter-spacing: .12em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 4px;">Overview</div>
+                    <h2 style="margin: 0; font-size: 26px;">Home</h2>
+                  </div>
+                  <button class="btn btn-secondary btn-icon" aria-label="Notifications" onClick="{{ openOverlay_notifications }}" style="position: relative;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    <span style="position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; background: #c0392b; border-radius: 50%;"></span>
+                  </button>
+                </div>
+
+                <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-2); flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: var(--space-3);">
+                  <div>
+                    <div class="card-kicker">Your balance</div>
+                    <div style="display: flex; align-items: baseline; gap: 2px;">
+                      <span style="font-family: var(--font-heading); font-weight: 700; font-size: 22px;">₱</span>
+                      <input class="input" type="number" step="0.01" value="{{ balance }}" onChange="{{ onBalanceChange }}" style="border: none; padding: 0; font-family: var(--font-heading); font-weight: 700; font-size: 22px; width: 110px; background: transparent;">
+                    </div>
+                  </div>
+                  <div style="font-size: 11px; color: var(--color-neutral-600); text-align: right; max-width: 120px;">Every expense is taken out automatically.</div>
+                </div>
+
+                <div class="card elev-sm" style="padding: var(--space-6) var(--space-4); gap: var(--space-3);">
+                  <div class="card-kicker">Spent this month</div>
+                  <div style="display: flex; align-items: baseline; gap: 10px;">
+                    <div style="font-family: var(--font-heading); font-weight: 600; font-size: 40px; line-height: 1;">₱{{ totalSpentLabel }}</div>
+                  </div>
+                  <div style="display: flex; align-items: flex-end; gap: 7px; height: 56px; margin-top: var(--space-2);">
+                    <div style="flex:1; height: 42%; background: var(--color-accent-300);"></div>
+                    <div style="flex:1; height: 58%; background: var(--color-accent-300);"></div>
+                    <div style="flex:1; height: 30%; background: var(--color-accent-300);"></div>
+                    <div style="flex:1; height: 71%; background: var(--color-accent-300);"></div>
+                    <div style="flex:1; height: 50%; background: var(--color-accent-300);"></div>
+                    <div style="flex:1; height: 65%; background: var(--color-accent-300);"></div>
+                    <div style="flex:1; height: 90%; background: var(--color-accent);"></div>
+                  </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin: var(--space-6) 0 var(--space-3);">
+                  <h4 style="margin: 0;">Categories</h4>
+                  <a class="btn btn-ghost" style="padding: 0; font-size: 12px; cursor: pointer;" onClick="{{ openOverlay_budgets }}">Budgets</a>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                  <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="6">
+                    <div class="card elev-sm" style="padding: var(--space-3); gap: var(--space-2);">
+                      <div style="width: 32px; height: 32px; background: #c0c0c0; display: flex; align-items: center; justify-content: center; color: var(--color-accent);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="{{ cat.iconPath }}"></path></svg>
+                      </div>
+                      <div style="font-size: 13px; font-weight: 600; font-family: var(--font-heading);">{{ cat.name }}</div>
+                      <div style="font-size: 16px; font-weight: 600;">₱{{ cat.spentLabel }}</div>
+                      <div style="height: 3px; background: var(--color-neutral-200);"><div style="height: 100%; width: {{ cat.pctLabel }}; background: {{ cat.barColor }};"></div></div>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin: var(--space-6) 0 var(--space-3);">
+                  <h4 style="margin: 0;">Recent</h4>
+                  <a class="btn btn-ghost" style="padding: 0; font-size: 12px; cursor: pointer;" onClick="{{ openOverlay_search }}">Search</a>
+                </div>
+                <div class="card elev-sm" style="padding: 0; gap: 0;">
+                  <sc-for list="{{ transactions }}" as="t" hint-placeholder-count="5">
+                    <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" onClick="{{ t.select }}">
+                      <div style="width: 30px; height: 30px; flex: none; background: #c0c0c0; display: flex; align-items: center; justify-content: center; color: var(--color-accent);">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2v20M2 12h20"></path></svg>
+                      </div>
+                      <div style="flex: 1;">
+                        <div style="font-size: 14px; font-weight: 500;">{{ t.name }}</div>
+                        <div style="font-size: 11px; color: var(--color-neutral-600);">{{ t.category }} · {{ t.date }}</div>
+                      </div>
+                      <div style="font-size: 14px; font-weight: 600;">-₱{{ t.amountLabel }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <button class="btn btn-primary btn-block" style="margin-top: var(--space-6); height: 48px; font-size: 15px; gap: 8px;" onClick="{{ openOverlay_add }}">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>
+                  Add expense
+                </button>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isAnalytics }}" hint-placeholder-val="{{ false }}">
+              <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+                <div style="margin-bottom: var(--space-6);">
+                  <div style="font: 600 11px var(--font-heading); letter-spacing: .12em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 4px;">Insights</div>
+                  <h2 style="margin: 0; font-size: 26px;">Analytics</h2>
+                </div>
+                <div class="card elev-sm" style="padding: var(--space-4);">
+                  <div class="card-kicker">Categorized spend</div>
+                  <div style="font-family: var(--font-heading); font-weight: 800; font-size: 32px; line-height: 1;">₱{{ totalSpentLabel }}</div>
+                  <div style="font-size: 12px; color: var(--color-neutral-600); margin-top: 2px;">{{ activeCategoryCount }} categories · August 2026</div>
+                </div>
+                <div style="display: flex; height: 14px; width: 100%; margin-top: var(--space-4); overflow: hidden;">
+                  <sc-for list="{{ analyticsBars }}" as="b" hint-placeholder-count="6">
+                    <div style="flex: {{ b.pct }}; background: {{ b.color }};"></div>
+                  </sc-for>
+                </div>
+                <div style="display: flex; flex-direction: column; margin-top: var(--space-3);">
+                  <sc-for list="{{ analyticsRows }}" as="row" hint-placeholder-count="6">
+                    <div style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-divider);">
+                      <div style="width: 10px; height: 10px; background: {{ row.color }}; flex: none;"></div>
+                      <div style="flex: 1; font-size: 14px;">{{ row.name }}</div>
+                      <div style="font-size: 14px; font-weight: 600;">₱{{ row.spentLabel }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ topCategory }}" hint-placeholder-val="{{ false }}">
+                  <div class="card elev-sm" style="padding: var(--space-4); margin-top: var(--space-4); flex-direction: row; align-items: center; gap: var(--space-3); background: var(--color-accent-100);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.6" style="flex: none;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                    <div style="font-size: 13px; color: var(--color-accent-800);">{{ topCategory.name }} is your biggest category this month — {{ topCategory.pctLabel }}% of tracked spend.</div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isSavings }}" hint-placeholder-val="{{ false }}">
+              <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+                <div style="margin-bottom: var(--space-6);">
+                  <div style="font: 600 11px var(--font-heading); letter-spacing: .12em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 4px;">Goals</div>
+                  <h2 style="margin: 0; font-size: 26px;">Savings</h2>
+                </div>
+                <div class="card elev-sm" style="padding: var(--space-4);">
+                  <div class="card-kicker">Saved this month</div>
+                  <div style="display: flex; align-items: baseline; gap: 10px;">
+                    <div style="font-family: var(--font-heading); font-weight: 800; font-size: 32px; line-height: 1;">₱340.00</div>
+                    <span class="tag" style="background: #dcf0df; color: #1e7a34;">+12% vs Jul</span>
+                  </div>
+                </div>
+                <div style="margin: var(--space-6) 0 var(--space-3);"><h4 style="margin: 0;">Goals</h4></div>
+                <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                  <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-2);">
+                    <div class="card-title" style="font-size: 15px;">Emergency fund</div>
+                    <div style="height: 6px; background: var(--color-neutral-200); margin-top: 2px;"><div style="height: 100%; width: 48%; background: #d99a1b;"></div></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--color-neutral-600);"><span>₱2,400 of ₱5,000</span><span>48%</span></div>
+                  </div>
+                  <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-2);">
+                    <div class="card-title" style="font-size: 15px;">New laptop</div>
+                    <div style="height: 6px; background: var(--color-neutral-200); margin-top: 2px;"><div style="height: 100%; width: 72%; background: #2f9e44;"></div></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--color-neutral-600);"><span>₱860 of ₱1,200</span><span>72%</span></div>
+                  </div>
+                  <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-2);">
+                    <div class="card-title" style="font-size: 15px;">Vacation</div>
+                    <div style="height: 6px; background: var(--color-neutral-200); margin-top: 2px;"><div style="height: 100%; width: 21%; background: #c0392b;"></div></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--color-neutral-600);"><span>₱310 of ₱1,500</span><span>21%</span></div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+              <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+                <h2 style="margin: 0 0 var(--space-4); font-size: 26px;">Settings</h2>
+                <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2);">Money</div>
+                <div class="card elev-sm" style="padding: 0; gap: 0; margin-bottom: var(--space-4);">
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" onClick="{{ openOverlay_budgets }}">
+                    <div style="flex: 1; font-size: 14px;">Budgets</div>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
+                  </div>
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); cursor: pointer;" onClick="{{ openOverlay_recurring }}">
+                    <div style="flex: 1; font-size: 14px;">Recurring</div>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
+                  </div>
+                </div>
+                <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2);">Account</div>
+                <div class="card elev-sm" style="padding: 0; gap: 0; margin-bottom: var(--space-4);">
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider);">
+                    <div style="flex: 1; font-size: 14px;">Currency</div>
+                    <div style="font-size: 13px; color: var(--color-neutral-600);">PHP (₱)</div>
+                  </div>
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" onClick="{{ toggleNotifications }}">
+                    <div style="flex: 1; font-size: 14px;">Notifications</div>
+                    <div style="width: 36px; height: 20px; background: {{ notifToggleBg }}; border-radius: 10px; position: relative; flex: none;">
+                      <div style="width: 16px; height: 16px; background: var(--color-bg); border-radius: 50%; position: absolute; top: 2px; {{ notifToggleSide }}: 2px;"></div>
+                    </div>
+                  </div>
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); cursor: pointer;" onClick="{{ toggleFaceId }}">
+                    <div style="flex: 1; font-size: 14px;">Face ID lock</div>
+                    <div style="width: 36px; height: 20px; background: {{ faceIdToggleBg }}; border-radius: 10px; position: relative; flex: none;">
+                      <div style="width: 16px; height: 16px; background: var(--color-bg); border-radius: 50%; position: absolute; top: 2px; {{ faceIdToggleSide }}: 2px;"></div>
+                    </div>
+                  </div>
+                </div>
+                <button class="btn btn-block" style="height: 44px; color: #c0392b; border: 1px solid #c0392b; justify-content: center;">Sign out</button>
+              </div>
+            </sc-if>
+
+          </div>
+
+          <div style="display: flex; border-top: 1px solid var(--color-divider); background: var(--color-bg); padding: 8px 4px calc(env(safe-area-inset-bottom, 8px) + 8px);">
+            <button style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; padding: 4px; cursor: pointer; color: {{ tabHomeColor }};" onClick="{{ goHome }}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"></path></svg>
+              <span style="font-size: 10px; font-weight: 600;">Home</span>
+            </button>
+            <button style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; padding: 4px; cursor: pointer; color: {{ tabAnalyticsColor }};" onClick="{{ goAnalytics }}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"></path><path d="M18 17V9M13 17V5M8 17v-5"></path></svg>
+              <span style="font-size: 10px; font-weight: 600;">Analytics</span>
+            </button>
+            <button style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; padding: 4px; cursor: pointer; color: {{ tabSavingsColor }};" onClick="{{ goSavings }}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+              <span style="font-size: 10px; font-weight: 600;">Savings</span>
+            </button>
+            <button style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; padding: 4px; cursor: pointer; color: {{ tabSettingsColor }};" onClick="{{ goSettings }}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              <span style="font-size: 10px; font-weight: 600;">Settings</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="position: absolute; inset: 0; background: var(--color-bg); transform: translateX({{ overlayX }}); transition: transform .3s ease; overflow-y: auto;">
+
+          <sc-if value="{{ overlayIsNotifications }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" onClick="{{ closeOverlay }}">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px;">Notifications</h2>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <sc-for list="{{ budgetAlerts }}" as="a" hint-placeholder-count="2">
+                  <div class="card elev-sm" style="padding: var(--space-3); flex-direction: row; align-items: flex-start; gap: var(--space-3); border-left: 3px solid {{ a.color }};">
+                    <div style="flex: 1;">
+                      <div style="font-size: 13px; font-weight: 600;">{{ a.title }}</div>
+                      <div style="font-size: 12px; color: var(--color-neutral-600); margin-top: 2px;">{{ a.detail }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+                <div class="card elev-sm" style="padding: var(--space-3); flex-direction: row; align-items: flex-start; gap: var(--space-3); border-left: 3px solid var(--color-accent);">
+                  <div style="flex: 1;">
+                    <div style="font-size: 13px; font-weight: 600;">Rent charges in 3 days</div>
+                    <div style="font-size: 12px; color: var(--color-neutral-600); margin-top: 2px;">₱850.00 from your linked account. 1d ago</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ overlayIsSearch }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" onClick="{{ closeOverlay }}">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px;">Transactions</h2>
+              </div>
+              <div style="position: relative; margin-bottom: var(--space-3);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.8" style="position: absolute; left: 10px; top: 10px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input class="input" type="text" placeholder="Search transactions" value="{{ searchQuery }}" onChange="{{ onSearchChange }}" style="padding-left: 34px;">
+              </div>
+              <div class="card elev-sm" style="padding: 0; gap: 0;">
+                <sc-for list="{{ filteredTransactions }}" as="t" hint-placeholder-count="3">
+                  <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" onClick="{{ t.select }}">
+                    <div style="flex: 1;">
+                      <div style="font-size: 14px; font-weight: 500;">{{ t.name }}</div>
+                      <div style="font-size: 11px; color: var(--color-neutral-600);">{{ t.category }} · {{ t.date }}</div>
+                    </div>
+                    <div style="font-size: 14px; font-weight: 600;">-₱{{ t.amountLabel }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ overlayIsBudgets }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" onClick="{{ closeOverlay }}">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px;">Budgets</h2>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="6">
+                  <div class="card elev-sm" style="padding: var(--space-3);">
+                    <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);">
+                      <div style="flex: 1; font-size: 14px; font-weight: 600; font-family: var(--font-heading);">{{ cat.name }}</div>
+                      <div style="display: flex; align-items: baseline; gap: 2px;"><span style="font-size: 13px;">₱</span><input class="input" type="number" value="{{ cat.budget }}" onChange="{{ cat.onBudgetChange }}" style="width: 64px; padding: 4px 6px; text-align: right;"></div>
+                    </div>
+                    <div style="height: 4px; background: var(--color-neutral-200);"><div style="height: 100%; width: {{ cat.pctLabel }}; background: {{ cat.barColor }};"></div></div>
+                    <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: 4px;">₱{{ cat.spentLabel }} spent</div>
+                  </div>
+                </sc-for>
+              </div>
+              <button class="btn btn-primary btn-block" style="margin-top: var(--space-6); height: 48px;" onClick="{{ closeOverlay }}">Save budgets</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ overlayIsRecurring }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" onClick="{{ closeOverlay }}">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px;">Recurring</h2>
+              </div>
+              <div class="card elev-sm" style="padding: var(--space-4); margin-bottom: var(--space-4);">
+                <div class="card-kicker">Monthly total</div>
+                <div style="font-family: var(--font-heading); font-weight: 800; font-size: 30px;">₱1,142.00</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <div class="card elev-sm" style="padding: var(--space-3); flex-direction: row; align-items: center; gap: var(--space-3);">
+                  <div style="flex: 1;">
+                    <div style="font-size: 14px; font-weight: 600; font-family: var(--font-heading);">Rent</div>
+                    <div style="font-size: 11px; color: var(--color-neutral-600);">charges Sept 1</div>
+                  </div>
+                  <div style="font-size: 15px; font-weight: 700;">₱850.00</div>
+                </div>
+                <div class="card elev-sm" style="padding: var(--space-3); flex-direction: row; align-items: center; gap: var(--space-3);">
+                  <div style="flex: 1;">
+                    <div style="font-size: 14px; font-weight: 600; font-family: var(--font-heading);">Gym membership</div>
+                    <div style="font-size: 11px; color: var(--color-neutral-600);">charges Aug 28</div>
+                  </div>
+                  <div style="font-size: 15px; font-weight: 700;">₱45.00</div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ overlayIsAdd }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" onClick="{{ closeOverlay }}">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px;">Add expense</h2>
+              </div>
+              <div class="field">
+                <label>What for</label>
+                <input class="input" type="text" placeholder="e.g. Coffee" value="{{ formName }}" onChange="{{ onFormNameChange }}">
+              </div>
+              <div class="field" style="margin-top: var(--space-3);">
+                <label>Category</label>
+                <select class="input" value="{{ formCategory }}" onChange="{{ onFormCategoryChange }}">
+                  <sc-for list="{{ categoryNames }}" as="name" hint-placeholder-count="6">
+                    <option value="{{ name }}">{{ name }}</option>
+                  </sc-for>
+                </select>
+              </div>
+              <div class="field" style="margin-top: var(--space-3);">
+                <label>Amount</label>
+                <input class="input" type="number" step="0.01" placeholder="0.00" value="{{ formAmount }}" onChange="{{ onFormAmountChange }}">
+              </div>
+              <button class="btn btn-primary btn-block" style="margin-top: var(--space-6); height: 48px;" onClick="{{ submitExpense }}">Subtract from balance</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ overlayIsDetail }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-6);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" onClick="{{ closeOverlay }}">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px;">Transaction</h2>
+              </div>
+              <sc-if value="{{ selectedTx }}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: var(--space-2); margin-bottom: var(--space-6);">
+                  <div style="font-size: 20px; font-weight: 700; font-family: var(--font-heading);">{{ selectedTx.name }}</div>
+                  <div style="font-size: 28px; font-weight: 800; font-family: var(--font-heading);">-₱{{ selectedTx.amountLabel }}</div>
+                </div>
+                <div class="field">
+                  <label>Category</label>
+                  <select class="input" value="{{ selectedTx.category }}" onChange="{{ onSelectedCategoryChange }}">
+                    <sc-for list="{{ categoryNames }}" as="name" hint-placeholder-count="6">
+                      <option value="{{ name }}">{{ name }}</option>
+                    </sc-for>
+                  </select>
+                </div>
+              </sc-if>
+              <button class="btn btn-block" style="height: 44px; color: #c0392b; border: 1px solid #c0392b; justify-content: center; margin-top: var(--space-4);" onClick="{{ deleteSelected }}">Delete transaction</button>
+            </div>
+          </sc-if>
+
+        </div>
+      </sc-if>
+
+    </div>
+  </x-import>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const CATEGORY_ICONS = {
+  Gas: 'M3 22V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16 M3 22h10 M13 8h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2',
+  Clothing: 'M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z',
+  Shopping: 'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z M3 6h18 M16 10a4 4 0 0 1-8 0',
+  Groceries: 'M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12',
+  Dining: 'M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2 M7 2v20 M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7',
+  Transport: 'M5 17H3v-6l2-5h12l2 5h2v6h-2 M5 17h10',
+  Other: 'M12 2v20M2 12h20',
+};
+
+class Component extends DCLogic {
+  state = {
+    showOnboarding: true,
+    tab: 'home',
+    overlay: null,
+    balance: 3200,
+    budgets: { Gas: 300, Clothing: 400, Shopping: 450, Groceries: 450, Dining: 300, Transport: 200 },
+    transactions: [
+      { id: 1, name: 'Shell Gas Station', category: 'Gas', date: 'Aug 15', amount: 42.10 },
+      { id: 2, name: 'Zara', category: 'Clothing', date: 'Aug 14', amount: 89.99 },
+      { id: 3, name: 'Whole Foods', category: 'Groceries', date: 'Aug 13', amount: 64.35 },
+      { id: 4, name: 'Target', category: 'Shopping', date: 'Aug 12', amount: 156.20 },
+      { id: 5, name: 'Chipotle', category: 'Dining', date: 'Aug 11', amount: 18.40 },
+    ],
+    selectedTxId: null,
+    formName: '',
+    formAmount: '',
+    formCategory: 'Gas',
+    searchQuery: '',
+    notificationsOn: true,
+    faceIdOn: false,
+  };
+
+  finishOnboarding = () => this.setState({ showOnboarding: false });
+  goHome = () => this.setState({ tab: 'home' });
+  goAnalytics = () => this.setState({ tab: 'analytics' });
+  goSavings = () => this.setState({ tab: 'savings' });
+  goSettings = () => this.setState({ tab: 'settings' });
+
+  openOverlay = (name) => this.setState({ overlay: name });
+  closeOverlay = () => this.setState({ overlay: null, selectedTxId: null });
+
+  onBalanceChange = (e) => this.setState({ balance: parseFloat(e.target.value) || 0 });
+  onFormNameChange = (e) => this.setState({ formName: e.target.value });
+  onFormAmountChange = (e) => this.setState({ formAmount: e.target.value });
+  onFormCategoryChange = (e) => this.setState({ formCategory: e.target.value });
+  onSearchChange = (e) => this.setState({ searchQuery: e.target.value });
+  toggleNotifications = () => this.setState(s => ({ notificationsOn: !s.notificationsOn }));
+  toggleFaceId = () => this.setState(s => ({ faceIdOn: !s.faceIdOn }));
+
+  onBudgetChange = (category, e) => {
+    const val = parseFloat(e.target.value) || 0;
+    this.setState(s => ({ budgets: { ...s.budgets, [category]: val } }));
+  };
+
+  submitExpense = () => {
+    const amt = parseFloat(this.state.formAmount) || 0;
+    if (amt <= 0) return;
+    const name = this.state.formName.trim() || 'Expense';
+    const tx = { id: Date.now(), name, category: this.state.formCategory, date: 'Today', amount: amt };
+    this.setState(s => ({
+      balance: s.balance - amt,
+      transactions: [tx, ...s.transactions],
+      formName: '', formAmount: '', overlay: null,
+    }));
+  };
+
+  selectTx = (id) => this.setState({ selectedTxId: id, overlay: 'detail' });
+  onSelectedCategoryChange = (e) => {
+    const cat = e.target.value;
+    this.setState(s => ({
+      transactions: s.transactions.map(t => t.id === s.selectedTxId ? { ...t, category: cat } : t),
+    }));
+  };
+  deleteSelected = () => this.setState(s => ({
+    transactions: s.transactions.filter(t => t.id !== s.selectedTxId),
+    overlay: null, selectedTxId: null,
+  }));
+
+  barColorFor(pct) {
+    if (pct >= 90) return '#c0392b';
+    if (pct >= 60) return '#d99a1b';
+    return '#2f9e44';
+  }
+
+  renderVals() {
+    const { tab, overlay, transactions, budgets, selectedTxId, searchQuery, notificationsOn, faceIdOn } = this.state;
+    const withLabel = transactions.map(t => ({ ...t, amountLabel: t.amount.toFixed(2), select: () => this.selectTx(t.id) }));
+    const q = searchQuery.trim().toLowerCase();
+    const filtered = q ? withLabel.filter(t => t.name.toLowerCase().includes(q) || t.category.toLowerCase().includes(q)) : withLabel;
+    const selectedTxRaw = transactions.find(t => t.id === selectedTxId) || null;
+    const selectedTx = selectedTxRaw ? { ...selectedTxRaw, amountLabel: selectedTxRaw.amount.toFixed(2) } : null;
+
+    const categoryNames = Object.keys(budgets);
+    const spendByCategory = {};
+    categoryNames.forEach(c => spendByCategory[c] = 0);
+    transactions.forEach(t => { spendByCategory[t.category] = (spendByCategory[t.category] || 0) + t.amount; });
+
+    const categories = categoryNames.map(name => {
+      const spent = spendByCategory[name] || 0;
+      const budget = budgets[name];
+      const pct = budget > 0 ? Math.min(100, (spent / budget) * 100) : 0;
+      return {
+        name, spent, budget,
+        spentLabel: spent.toFixed(2),
+        pctLabel: pct.toFixed(0) + '%',
+        barColor: this.barColorFor(pct),
+        iconPath: CATEGORY_ICONS[name] || CATEGORY_ICONS.Other,
+        onBudgetChange: (e) => this.onBudgetChange(name, e),
+      };
+    });
+
+    const totalSpent = Object.values(spendByCategory).reduce((a, b) => a + b, 0);
+    const sortedByCat = [...categories].filter(c => c.spent > 0).sort((a, b) => b.spent - a.spent);
+    const ramp = ['var(--color-accent-900)', 'var(--color-accent-700)', 'var(--color-accent-600)', 'var(--color-accent-500)', 'var(--color-accent-400)', 'var(--color-accent-300)'];
+    const analyticsRows = sortedByCat.map((c, i) => ({ name: c.name, spentLabel: c.spentLabel, color: ramp[i % ramp.length] }));
+    const analyticsBars = sortedByCat.map((c, i) => ({ pct: totalSpent > 0 ? (c.spent / totalSpent) * 100 : 0, color: ramp[i % ramp.length] }));
+    const topCategory = sortedByCat[0] ? { name: sortedByCat[0].name, pctLabel: totalSpent > 0 ? ((sortedByCat[0].spent / totalSpent) * 100).toFixed(0) : '0' } : null;
+
+    const budgetAlerts = categories.filter(c => c.budget > 0 && (c.spent / c.budget) >= 0.8).map(c => ({
+      title: `${c.name} budget at ${c.pctLabel}`,
+      detail: `₱${Math.max(0, c.budget - c.spent).toFixed(2)} left for the month.`,
+      color: c.barColor,
+    }));
+
+    const accent = 'var(--color-accent)';
+    const muted = 'var(--color-neutral-600)';
+    return {
+      showOnboarding: this.state.showOnboarding,
+      finishOnboarding: this.finishOnboarding,
+      isHome: tab === 'home', isAnalytics: tab === 'analytics', isSavings: tab === 'savings', isSettings: tab === 'settings',
+      goHome: this.goHome, goAnalytics: this.goAnalytics, goSavings: this.goSavings, goSettings: this.goSettings,
+      tabHomeColor: tab === 'home' ? accent : muted,
+      tabAnalyticsColor: tab === 'analytics' ? accent : muted,
+      tabSavingsColor: tab === 'savings' ? accent : muted,
+      tabSettingsColor: tab === 'settings' ? accent : muted,
+      balance: this.state.balance,
+      onBalanceChange: this.onBalanceChange,
+      transactions: withLabel,
+      filteredTransactions: filtered,
+      searchQuery,
+      onSearchChange: this.onSearchChange,
+      categories,
+      categoryNames,
+      totalSpentLabel: totalSpent.toFixed(2),
+      activeCategoryCount: sortedByCat.length,
+      analyticsRows,
+      analyticsBars,
+      topCategory,
+      budgetAlerts,
+      notificationsOn,
+      notifToggleBg: notificationsOn ? 'var(--color-accent)' : 'var(--color-neutral-300)',
+      notifToggleSide: notificationsOn ? 'right' : 'left',
+      toggleNotifications: this.toggleNotifications,
+      faceIdOn,
+      faceIdToggleBg: faceIdOn ? 'var(--color-accent)' : 'var(--color-neutral-300)',
+      faceIdToggleSide: faceIdOn ? 'right' : 'left',
+      toggleFaceId: this.toggleFaceId,
+      overlayX: overlay ? '0%' : '100%',
+      overlayIsNotifications: overlay === 'notifications',
+      overlayIsSearch: overlay === 'search',
+      overlayIsBudgets: overlay === 'budgets',
+      overlayIsRecurring: overlay === 'recurring',
+      overlayIsAdd: overlay === 'add',
+      overlayIsDetail: overlay === 'detail',
+      selectedTx,
+      onSelectedCategoryChange: this.onSelectedCategoryChange,
+      closeOverlay: this.closeOverlay,
+      openOverlay_notifications: () => this.openOverlay('notifications'),
+      openOverlay_search: () => this.openOverlay('search'),
+      openOverlay_budgets: () => this.openOverlay('budgets'),
+      openOverlay_recurring: () => this.openOverlay('recurring'),
+      openOverlay_add: () => this.openOverlay('add'),
+      formName: this.state.formName,
+      formAmount: this.state.formAmount,
+      formCategory: this.state.formCategory,
+      onFormNameChange: this.onFormNameChange,
+      onFormAmountChange: this.onFormAmountChange,
+      onFormCategoryChange: this.onFormCategoryChange,
+      submitExpense: this.submitExpense,
+      deleteSelected: this.deleteSelected,
+    };
+  }
+}
+</script>
+</body>
+</html>
