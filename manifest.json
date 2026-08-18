@@ -1,7 +1,7 @@
 {
   "name": "financial_freedom_inprogress",
   "short_name": "fin_freedom",
-  "start_url": "./Expense Tracker Prototype.dc.html",
+  "start_url": "./app.html",
   "display": "standalone",
   "background_color": "#f2f4f3",
   "theme_color": "#1f7a6e",
