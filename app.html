@@ -68,6 +68,15 @@
                   <button style="flex: none; padding: 6px 12px; border-radius: 999px; border: 1px dashed var(--color-divider); background: none; color: var(--color-neutral-600); font-size: 12px; font-weight: 600; cursor: pointer;" sc-camel-on-click="{{ openOverlay_wallets }}">Manage</button>
                 </div>
 
+                <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-2); margin-bottom: var(--space-3); background: var(--color-accent-100);">
+                  <div class="card-kicker">Total balance</div>
+                  <div style="display: flex; align-items: baseline; gap: 2px;">
+                    <span style="font-family: var(--font-heading); font-weight: 700; font-size: 26px; color: var(--color-accent-800);">₱</span>
+                    <span style="font-family: var(--font-heading); font-weight: 700; font-size: 26px; color: var(--color-accent-800);">{{ totalBalanceLabel }}</span>
+                  </div>
+                  <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: 2px;">Across {{ wallets.length }} sources</div>
+                </div>
+
                 <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-2); flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: var(--space-3);">
                   <div>
                     <div class="card-kicker">{{ activeWalletName }} balance</div>
@@ -1044,6 +1053,7 @@ class Component {
       .map(label => ({ label, totalLabel: monthTotals[label].toFixed(2) }));
 
     const activeWallet = wallets.find(w => w.id === activeWalletId) || wallets[0];
+    const totalBalance = wallets.reduce((sum, w) => sum + (parseFloat(w.balance) || 0), 0);
     const walletsRender = wallets.map(w => ({
       ...w,
       bg: w.id === activeWalletId ? 'var(--color-accent)' : 'none',
@@ -1070,6 +1080,7 @@ class Component {
       tabSavingsColor: tab === 'savings' ? accent : muted,
       tabSettingsColor: tab === 'settings' ? accent : muted,
       wallets: walletsRender,
+      totalBalanceLabel: totalBalance.toFixed(2),
       activeWalletName: activeWallet.name,
       activeWalletBalance: activeWallet.balance,
       onWalletBalanceChange: this.onWalletBalanceChange,
