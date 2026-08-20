@@ -635,6 +635,14 @@ function toCamel(kebab) {
 
 // Compiles a DOM node (from the parsed template) into an array of real, live
 // DOM nodes given the current scope (view-model + loop variables).
+function getItemKey(item) {
+  if (item && typeof item === 'object') {
+    if (item.id !== undefined) return String(item.id);
+    if (item.name !== undefined) return String(item.name);
+  }
+  return null;
+}
+
 function compileNode(node, scope, svgMode) {
   if (node.nodeType === Node.TEXT_NODE) {
     const text = interpolate(node.textContent, scope);
@@ -661,7 +669,14 @@ function compileNode(node, scope, svgMode) {
     list.forEach((item) => {
       const childScope = Object.create(scope);
       childScope[asName] = item;
-      for (const child of Array.from(node.childNodes)) out = out.concat(compileNode(child, childScope, svgMode));
+      let iterNodes = [];
+      for (const child of Array.from(node.childNodes)) iterNodes = iterNodes.concat(compileNode(child, childScope, svgMode));
+      const key = getItemKey(item);
+      if (key !== null) {
+        const firstEl = iterNodes.find(n => n.nodeType === Node.ELEMENT_NODE);
+        if (firstEl) firstEl.setAttribute('data-sc-key', key);
+      }
+      out = out.concat(iterNodes);
     });
     return out;
   }
@@ -745,18 +760,63 @@ function morph(oldNode, newNode) {
     }
     const oldKids = Array.from(oldNode.childNodes);
     const newKids = Array.from(newNode.childNodes);
+    morphChildren(oldNode, oldKids, newKids);
+  }
+  return oldNode;
+}
+
+function getKeyOf(n) {
+  return (n.nodeType === Node.ELEMENT_NODE && n.getAttribute) ? n.getAttribute('data-sc-key') : null;
+}
+
+function morphChildren(parent, oldKids, newKids) {
+  const anyKeyed = newKids.some(k => getKeyOf(k) !== null);
+
+  if (!anyKeyed) {
+    // No stable identity involved here (plain markup) - simple positional patch is safe.
     const max = Math.max(oldKids.length, newKids.length);
     for (let i = 0; i < max; i++) {
       if (i >= oldKids.length) {
-        oldNode.appendChild(newKids[i]);
+        parent.appendChild(newKids[i]);
       } else if (i >= newKids.length) {
-        oldNode.removeChild(oldKids[i]);
+        parent.removeChild(oldKids[i]);
       } else {
         morph(oldKids[i], newKids[i]);
       }
     }
+    return;
   }
-  return oldNode;
+
+  // Keyed reconciliation: match nodes by stable identity (item.id/name) rather
+  // than list position, so an existing DOM node - and its event listeners -
+  // only ever gets reused for the SAME logical item, even if the list was
+  // reordered, had items inserted, or had items removed.
+  const oldByKey = new Map();
+  oldKids.forEach(k => {
+    const key = getKeyOf(k);
+    if (key !== null) oldByKey.set(key, k);
+  });
+
+  const usedOld = new Set();
+  const liveNodes = newKids.map(newChild => {
+    const key = getKeyOf(newChild);
+    if (key !== null && oldByKey.has(key)) {
+      const match = oldByKey.get(key);
+      usedOld.add(match);
+      morph(match, newChild);
+      return match;
+    }
+    return newChild; // brand-new item; already has correct listeners from construction
+  });
+
+  oldKids.forEach(k => {
+    if (!usedOld.has(k) && k.parentNode === parent) parent.removeChild(k);
+  });
+
+  liveNodes.forEach((node, i) => {
+    const current = parent.childNodes[i];
+    if (current !== node) parent.insertBefore(node, current || null);
+  });
 }
 
 // ===================== App bootstrap =====================
@@ -770,12 +830,7 @@ function mountApp(templateEl, rootEl, getViewModel) {
     }
     const newKids = Array.from(frag.childNodes);
     const oldKids = Array.from(rootEl.childNodes);
-    const max = Math.max(oldKids.length, newKids.length);
-    for (let i = 0; i < max; i++) {
-      if (i >= oldKids.length) rootEl.appendChild(newKids[i]);
-      else if (i >= newKids.length) rootEl.removeChild(oldKids[i]);
-      else morph(oldKids[i], newKids[i]);
-    }
+    morphChildren(rootEl, oldKids, newKids);
   }
   return render;
 }
