@@ -53,7 +53,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4);">
                   <div>
                     <div style="font: 600 11px var(--font-heading); letter-spacing: .12em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 4px;">Overview</div>
-                    <h2 style="margin: 0; font-size: 26px;">Home</h2>
+                    <h2 style="margin: 0; font-size: 26px;">{{ greeting }}</h2>
                   </div>
                   <button class="btn btn-secondary btn-icon" aria-label="Notifications" sc-camel-on-click="{{ openOverlay_notifications }}" style="position: relative;">
                     <svg width="18" height="18" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
@@ -76,6 +76,16 @@
                   </div>
                   <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: 2px;">Across {{ wallets.length }} sources</div>
                 </div>
+
+                <sc-if value="{{ totalReceivableRaw }}" hint-placeholder-val="{{ false }}">
+                  <div class="card elev-sm" style="padding: var(--space-3) var(--space-4); gap: 2px; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: var(--space-3); cursor: pointer;" sc-camel-on-click="{{ openOverlay_receivables }}">
+                    <div>
+                      <div class="card-kicker">Owed to you</div>
+                      <div style="font-family: var(--font-heading); font-weight: 700; font-size: 18px;">₱{{ totalReceivableLabel }}</div>
+                    </div>
+                    <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
+                  </div>
+                </sc-if>
 
                 <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-2); flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: var(--space-3);">
                   <div>
@@ -266,6 +276,14 @@
             <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
               <div style="padding: 58px 20px 24px; box-sizing: border-box;">
                 <h2 style="margin: 0 0 var(--space-4); font-size: 26px;">Settings</h2>
+                <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2);">Profile</div>
+                <div class="card elev-sm" style="padding: var(--space-4); margin-bottom: var(--space-4);">
+                  <div class="field">
+                    <label>Your name</label>
+                    <input class="input" type="text" placeholder="e.g. Harold" value="{{ userName }}" sc-camel-on-change="{{ onUserNameChange }}">
+                  </div>
+                  <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: 6px;">Shows up as your greeting on Home.</div>
+                </div>
                 <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2);">Money</div>
                 <div class="card elev-sm" style="padding: 0; gap: 0; margin-bottom: var(--space-4);">
                   <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ openOverlay_wallets }}">
@@ -278,6 +296,10 @@
                   </div>
                   <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ openOverlay_recurring }}">
                     <div style="flex: 1; font-size: 14px;">Recurring</div>
+                    <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
+                  </div>
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ openOverlay_receivables }}">
+                    <div style="flex: 1; font-size: 14px;">Receivables</div>
                     <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
                   </div>
                   <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); cursor: pointer;" sc-camel-on-click="{{ openOverlay_history }}">
@@ -513,6 +535,60 @@
                 <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ addRecurringBill }}">Add recurring bill</button>
               </div>
               <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: var(--space-3); text-align: center;">Bills are added automatically as a transaction the next time you open the app on or after their charge day each month.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ overlayIsReceivables }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" sc-camel-on-click="{{ closeOverlay }}">
+                  <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px;">Receivables</h2>
+              </div>
+              <div class="card elev-sm" style="padding: var(--space-4); margin-bottom: var(--space-4);">
+                <div class="card-kicker">Total owed to you</div>
+                <div style="font-family: var(--font-heading); font-weight: 800; font-size: 30px;">₱{{ totalReceivableLabel }}</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <sc-for list="{{ receivables }}" as="r" hint-placeholder-count="3">
+                  <div class="card elev-sm" style="padding: var(--space-3);">
+                    <div style="display: flex; align-items: center; gap: var(--space-3);">
+                      <div style="flex: 1;">
+                        <div style="font-size: 14px; font-weight: 600; font-family: var(--font-heading); {{ r.nameStrike }}">{{ r.personName }}</div>
+                        <div style="font-size: 11px; color: var(--color-neutral-600);">{{ r.note }}</div>
+                      </div>
+                      <div style="font-size: 15px; font-weight: 700; {{ r.nameStrike }}">₱{{ r.amountLabel }}</div>
+                      <button class="btn btn-secondary btn-icon" aria-label="Delete receivable" sc-camel-on-click="{{ r.remove }}" style="flex: none;">
+                        <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>
+                      </button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); cursor: pointer;" sc-camel-on-click="{{ r.toggleSettled }}">
+                      <div style="width: 34px; height: 20px; background: {{ r.toggleBg }}; border-radius: 10px; position: relative; flex: none;">
+                        <div style="width: 16px; height: 16px; background: var(--color-bg); border-radius: 50%; position: absolute; top: 2px; {{ r.toggleSide }}: 2px;"></div>
+                      </div>
+                      <div style="font-size: 12px; color: var(--color-neutral-600);">{{ r.settledLabel }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-3);">
+                <div class="card-title" style="font-size: 14px;">Add someone who owes you</div>
+                <div class="field">
+                  <label>Name</label>
+                  <input class="input" type="text" placeholder="e.g. Ana" value="{{ newReceivableName }}" sc-camel-on-change="{{ onNewReceivableNameChange }}">
+                </div>
+                <div class="field">
+                  <label>Amount</label>
+                  <input class="input" type="number" placeholder="0.00" value="{{ newReceivableAmount }}" sc-camel-on-change="{{ onNewReceivableAmountChange }}">
+                </div>
+                <div class="field">
+                  <label>Note (optional)</label>
+                  <input class="input" type="text" placeholder="e.g. Lunch money" value="{{ newReceivableNote }}" sc-camel-on-change="{{ onNewReceivableNoteChange }}">
+                </div>
+                <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ addReceivable }}">Add</button>
+              </div>
+              <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: var(--space-3); text-align: center;">Marking someone as paid adds the amount to your active wallet automatically.</div>
             </div>
           </sc-if>
 
@@ -1079,6 +1155,8 @@ const DEFAULT_STATE = {
   notificationsOn: true,
   homeInfoTab: 'recent',
   recurringBills: [],
+  receivables: [],
+  userName: '',
   notifiedThisMonth: {},
   _categoriesMigratedV2: true,
   savingsGoals: [
@@ -1105,7 +1183,7 @@ function loadPersisted() {
     return { ...DEFAULT_STATE, ...parsed, budgets, categoryEmojis, _categoriesMigratedV2: true };
   } catch (e) { return DEFAULT_STATE; }
 }
-const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'budgets', 'categoryEmojis', 'transactions', 'notificationsOn', 'savingsGoals', 'homeInfoTab', 'recurringBills', 'notifiedThisMonth', '_categoriesMigratedV2'];
+const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'budgets', 'categoryEmojis', 'transactions', 'notificationsOn', 'savingsGoals', 'homeInfoTab', 'recurringBills', 'receivables', 'userName', 'notifiedThisMonth', '_categoriesMigratedV2'];
 
 function formatDateLabel(iso) {
   const d = new Date(iso + 'T00:00:00');
@@ -1158,6 +1236,9 @@ class Component {
       newRecurringAmount: '',
       newRecurringDay: '1',
       newRecurringCategory: '',
+      newReceivableName: '',
+      newReceivableAmount: '',
+      newReceivableNote: '',
       importError: null,
     };
     this.checkAndApplyRecurring();
@@ -1278,6 +1359,57 @@ class Component {
       this.state = { ...this.state, wallets, recurringBills: updatedBills, transactions: [...newTxs, ...this.state.transactions] };
     }
   }
+
+  // === Receivables (money owed to you) ===
+  onUserNameChange = (e) => this.setState({ userName: e.target.value });
+
+  onNewReceivableNameChange = (e) => this.setState({ newReceivableName: e.target.value });
+  onNewReceivableAmountChange = (e) => this.setState({ newReceivableAmount: e.target.value });
+  onNewReceivableNoteChange = (e) => this.setState({ newReceivableNote: e.target.value });
+  addReceivable = () => {
+    const name = (this.state.newReceivableName || '').trim();
+    const amount = parseFloat(this.state.newReceivableAmount);
+    if (!name || isNaN(amount) || amount <= 0) return;
+    const id = 'rcv' + Date.now();
+    this.setState(s => ({
+      receivables: [...s.receivables, {
+        id, personName: name, amount, note: (s.newReceivableNote || '').trim(),
+        dateISO: new Date().toISOString().slice(0, 10), settled: false,
+      }],
+      newReceivableName: '', newReceivableAmount: '', newReceivableNote: '',
+    }));
+  };
+  doDeleteReceivable = (id) => this.setState(s => ({ receivables: s.receivables.filter(r => r.id !== id) }));
+  removeReceivable = (id) => {
+    const r = this.state.receivables.find(r => r.id === id);
+    this.confirmDelete('receivable', id, r ? r.personName : 'this entry');
+  };
+  // Marking as paid credits your active wallet and logs an income transaction;
+  // unmarking reverses that exact transaction so balances stay correct.
+  toggleReceivableSettled = (id) => this.setState(s => {
+    const r = s.receivables.find(r => r.id === id);
+    if (!r) return {};
+    let wallets = s.wallets;
+    let transactions = s.transactions;
+    if (!r.settled) {
+      const walletId = s.activeWalletId;
+      wallets = wallets.map(w => w.id === walletId ? { ...w, balance: (parseFloat(w.balance) || 0) + r.amount } : w);
+      transactions = [{
+        id: Date.now(), name: `${r.personName} paid you back`, category: 'Income', type: 'income',
+        walletId, amount: r.amount, dateISO: new Date().toISOString().slice(0, 10), photo: null, receivableId: r.id,
+      }, ...transactions];
+    } else {
+      const linkedTx = transactions.find(t => t.receivableId === r.id);
+      if (linkedTx) {
+        wallets = wallets.map(w => w.id === linkedTx.walletId ? { ...w, balance: (parseFloat(w.balance) || 0) - linkedTx.amount } : w);
+        transactions = transactions.filter(t => t.id !== linkedTx.id);
+      }
+    }
+    return {
+      wallets, transactions,
+      receivables: s.receivables.map(x => x.id === id ? { ...x, settled: !r.settled } : x),
+    };
+  });
 
   openTransfer = () => {
     const other = this.state.wallets.find(w => w.id !== this.state.activeWalletId);
@@ -1580,6 +1712,7 @@ class Component {
     else if (pd.type === 'category') this.doDeleteCategory(pd.id);
     else if (pd.type === 'goal') this.doDeleteGoal(pd.id);
     else if (pd.type === 'recurring') this.doDeleteRecurring(pd.id);
+    else if (pd.type === 'receivable') this.doDeleteReceivable(pd.id);
     this.setState({ pendingDelete: null });
   };
 
@@ -1762,6 +1895,22 @@ class Component {
     const activeWallet = wallets.find(w => w.id === activeWalletId) || wallets[0];
     const totalBalance = wallets.reduce((sum, w) => sum + (parseFloat(w.balance) || 0), 0);
 
+    const receivablesRender = this.state.receivables.map(r => ({
+      ...r,
+      amountLabel: (parseFloat(r.amount) || 0).toFixed(2),
+      settledLabel: r.settled ? 'Paid' : 'Still owed',
+      nameStrike: r.settled ? 'text-decoration: line-through; opacity: 0.5;' : '',
+      toggleBg: r.settled ? 'var(--color-accent)' : 'var(--color-neutral-300)',
+      toggleSide: r.settled ? 'right' : 'left',
+      toggleSettled: () => this.toggleReceivableSettled(r.id),
+      remove: () => this.removeReceivable(r.id),
+    }));
+    const totalReceivable = this.state.receivables.filter(r => !r.settled).reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+
+    const nameTrimmed = (this.state.userName || '').trim();
+    const greeting = nameTrimmed ? `Hello, ${nameTrimmed}` : 'Home';
+
+
     const savingsGoalsRender = this.state.savingsGoals.map(g => {
       const saved = parseFloat(g.saved) || 0;
       const target = parseFloat(g.target) || 0;
@@ -1803,6 +1952,21 @@ class Component {
       tabSettingsColor: tab === 'settings' ? accent : muted,
       wallets: walletsRender,
       totalBalanceLabel: totalBalance.toFixed(2),
+      greeting,
+      userName: this.state.userName,
+      onUserNameChange: this.onUserNameChange,
+      receivables: receivablesRender,
+      totalReceivableLabel: totalReceivable.toFixed(2),
+      totalReceivableRaw: totalReceivable,
+      overlayIsReceivables: overlay === 'receivables',
+      openOverlay_receivables: () => this.openOverlay('receivables'),
+      newReceivableName: this.state.newReceivableName,
+      newReceivableAmount: this.state.newReceivableAmount,
+      newReceivableNote: this.state.newReceivableNote,
+      onNewReceivableNameChange: this.onNewReceivableNameChange,
+      onNewReceivableAmountChange: this.onNewReceivableAmountChange,
+      onNewReceivableNoteChange: this.onNewReceivableNoteChange,
+      addReceivable: this.addReceivable,
       activeWalletName: activeWallet.name,
       activeWalletBalance: activeWallet.balance,
       isRecentTab: this.state.homeInfoTab !== 'categories',
