@@ -834,6 +834,7 @@ const DEFAULT_STATE = {
   ],
   notificationsOn: true,
   faceIdOn: false,
+  _categoriesMigratedV2: true,
   savingsGoals: [
     { id: 'g1', name: 'Emergency fund', saved: 2400, target: 5000 },
     { id: 'g2', name: 'New laptop', saved: 860, target: 1200 },
@@ -845,10 +846,18 @@ function loadPersisted() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_STATE;
-    return { ...DEFAULT_STATE, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    let budgets = parsed.budgets || {};
+    // One-time migration: bring in any newly-added default categories for
+    // people who already have older saved data, without reintroducing
+    // categories they've since deleted on repeat visits.
+    if (!parsed._categoriesMigratedV2) {
+      budgets = { ...DEFAULT_STATE.budgets, ...budgets };
+    }
+    return { ...DEFAULT_STATE, ...parsed, budgets, _categoriesMigratedV2: true };
   } catch (e) { return DEFAULT_STATE; }
 }
-const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'budgets', 'transactions', 'notificationsOn', 'faceIdOn', 'savingsGoals'];
+const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'budgets', 'transactions', 'notificationsOn', 'faceIdOn', 'savingsGoals', '_categoriesMigratedV2'];
 
 function formatDateLabel(iso) {
   const d = new Date(iso + 'T00:00:00');
@@ -884,6 +893,7 @@ class Component {
       newCategoryName: '',
       newCategoryBudget: '',
     };
+    this.persist(); // lock in the one-time category migration flag right away
   }
 
   setState(update) {
