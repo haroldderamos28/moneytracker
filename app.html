@@ -532,11 +532,21 @@
               <sc-if value="{{ formTypeIsExpense }}" hint-placeholder-val="{{ true }}">
                 <div class="field" style="margin-top: var(--space-3);">
                   <label>Category</label>
-                  <sc-raw-select class="input" value="{{ formCategory }}" sc-camel-on-change="{{ onFormCategoryChange }}">
-                    <sc-for list="{{ categoryNames }}" as="name" hint-placeholder-count="6">
-                      <option value="{{ name }}">{{ name }}</option>
-                    </sc-for>
-                  </sc-raw-select>
+                  <sc-if value="{{ addingNewCategory }}" hint-placeholder-val="{{ false }}">
+                    <div style="display: flex; gap: var(--space-2); align-items: center;">
+                      <input class="input" type="text" placeholder="New category name" value="{{ newCategoryName }}" sc-camel-on-change="{{ onNewCategoryNameChange }}" style="flex: 1;">
+                      <button class="btn btn-primary" style="flex: none; height: 40px; padding: 0 14px;" sc-camel-on-click="{{ confirmNewCategoryInline }}">Add</button>
+                      <button class="btn btn-secondary" style="flex: none; height: 40px; padding: 0 14px;" sc-camel-on-click="{{ cancelNewCategoryInline }}">Cancel</button>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ !addingNewCategory }}" hint-placeholder-val="{{ true }}">
+                    <sc-raw-select class="input" value="{{ formCategory }}" sc-camel-on-change="{{ onFormCategoryChange }}">
+                      <sc-for list="{{ categoryNames }}" as="name" hint-placeholder-count="6">
+                        <option value="{{ name }}">{{ name }}</option>
+                      </sc-for>
+                      <option value="__new__">+ Add new category</option>
+                    </sc-raw-select>
+                  </sc-if>
                 </div>
               </sc-if>
 
@@ -949,6 +959,7 @@ class Component {
       newGoalTarget: '',
       newCategoryName: '',
       newCategoryBudget: '',
+      addingNewCategory: false,
     };
     this.persist(); // lock in the one-time category migration flag right away
   }
@@ -1021,8 +1032,25 @@ class Component {
 
   onFormNameChange = (e) => this.setState({ formName: e.target.value });
   onFormAmountChange = (e) => this.setState({ formAmount: e.target.value });
-  onFormCategoryChange = (e) => this.setState({ formCategory: e.target.value });
   onFormWalletChange = (e) => this.setState({ formWalletId: e.target.value });
+  onFormCategoryChange = (e) => {
+    const val = e.target.value;
+    if (val === '__new__') {
+      this.setState({ addingNewCategory: true, newCategoryName: '' });
+      return;
+    }
+    this.setState({ formCategory: val });
+  };
+  confirmNewCategoryInline = () => {
+    const name = this.state.newCategoryName.trim();
+    if (!name) { this.setState({ addingNewCategory: false }); return; }
+    if (this.state.budgets[name] === undefined) {
+      this.setState(s => ({ budgets: { ...s.budgets, [name]: 0 }, formCategory: name, addingNewCategory: false, newCategoryName: '' }));
+    } else {
+      this.setState({ formCategory: name, addingNewCategory: false, newCategoryName: '' });
+    }
+  };
+  cancelNewCategoryInline = () => this.setState({ addingNewCategory: false, newCategoryName: '' });
   onSearchChange = (e) => this.setState({ searchQuery: e.target.value });
   toggleNotifications = () => this.setState(s => ({ notificationsOn: !s.notificationsOn }));
   toggleFaceId = () => this.setState(s => ({ faceIdOn: !s.faceIdOn }));
@@ -1361,6 +1389,9 @@ class Component {
       formWalletId: this.state.formWalletId || activeWalletId,
       formTypeIsExpense: formType === 'expense',
       formTypeIsIncome: formType === 'income',
+      addingNewCategory: this.state.addingNewCategory,
+      confirmNewCategoryInline: this.confirmNewCategoryInline,
+      cancelNewCategoryInline: this.cancelNewCategoryInline,
       setTypeExpense: this.setTypeExpense,
       setTypeIncome: this.setTypeIncome,
       formPhoto: this.state.formPhoto,
