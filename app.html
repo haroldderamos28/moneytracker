@@ -105,23 +105,6 @@
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: baseline; margin: var(--space-6) 0 var(--space-3);">
-                  <h4 style="margin: 0;">Categories</h4>
-                  <a class="btn btn-ghost" style="padding: 0; font-size: 12px; cursor: pointer;" sc-camel-on-click="{{ openOverlay_budgets }}">Budgets</a>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
-                  <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="6">
-                    <div class="card elev-sm" style="padding: var(--space-3); gap: var(--space-2);">
-                      <div style="width: 32px; height: 32px; background: #c0c0c0; display: flex; align-items: center; justify-content: center; color: var(--color-accent);">
-                        <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="{{ cat.iconPath }}"></path></svg>
-                      </div>
-                      <div style="font-size: 13px; font-weight: 600; font-family: var(--font-heading);">{{ cat.name }}</div>
-                      <div style="font-size: 16px; font-weight: 600;">₱{{ cat.spentLabel }}</div>
-                      <div style="height: 3px; background: var(--color-neutral-200);"><div style="height: 100%; width: {{ cat.pctLabel }}; background: {{ cat.barColor }};"></div></div>
-                    </div>
-                  </sc-for>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; align-items: baseline; margin: var(--space-6) 0 var(--space-3);">
                   <h4 style="margin: 0;">Recent</h4>
                   <a class="btn btn-ghost" style="padding: 0; font-size: 12px; cursor: pointer;" sc-camel-on-click="{{ openOverlay_search }}">Search</a>
                 </div>
@@ -139,6 +122,25 @@
                     </div>
                   </sc-for>
                 </div>
+
+                <sc-if value="{{ activeCategories.length }}" hint-placeholder-val="{{ true }}">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline; margin: var(--space-6) 0 var(--space-3);">
+                    <h4 style="margin: 0;">Categories</h4>
+                    <a class="btn btn-ghost" style="padding: 0; font-size: 12px; cursor: pointer;" sc-camel-on-click="{{ openOverlay_budgets }}">Budgets</a>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                    <sc-for list="{{ activeCategories }}" as="cat" hint-placeholder-count="6">
+                      <div class="card elev-sm" style="padding: var(--space-3); gap: var(--space-2);">
+                        <div style="width: 32px; height: 32px; background: #c0c0c0; display: flex; align-items: center; justify-content: center; color: var(--color-accent);">
+                          <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="{{ cat.iconPath }}"></path></svg>
+                        </div>
+                        <div style="font-size: 13px; font-weight: 600; font-family: var(--font-heading);">{{ cat.name }}</div>
+                        <div style="font-size: 16px; font-weight: 600;">₱{{ cat.spentLabel }}</div>
+                        <div style="height: 3px; background: var(--color-neutral-200);"><div style="height: 100%; width: {{ cat.pctLabel }}; background: {{ cat.barColor }};"></div></div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
 
                 <button class="btn btn-primary btn-block" style="margin-top: var(--space-6); height: 48px; font-size: 15px; gap: 8px;" sc-camel-on-click="{{ openOverlay_add }}">
                   <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>
@@ -1165,6 +1167,7 @@ class Component {
     });
 
     const totalSpent = Object.values(spendByCategory).reduce((a, b) => a + b, 0);
+    const activeCategories = categories.filter(c => c.spent > 0);
     const sortedByCat = [...categories].filter(c => c.spent > 0).sort((a, b) => b.spent - a.spent);
     const ramp = ['var(--color-accent-900)', 'var(--color-accent-700)', 'var(--color-accent-600)', 'var(--color-accent-500)', 'var(--color-accent-400)', 'var(--color-accent-300)'];
     const analyticsRows = sortedByCat.map((c, i) => ({ name: c.name, spentLabel: c.spentLabel, color: ramp[i % ramp.length] }));
@@ -1246,6 +1249,7 @@ class Component {
       searchQuery,
       onSearchChange: this.onSearchChange,
       categories,
+      activeCategories,
       categoryNames,
       totalSpentLabel: totalSpent.toFixed(2),
       activeCategoryCount: sortedByCat.length,
