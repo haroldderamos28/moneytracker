@@ -104,41 +104,55 @@
                   </div>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: baseline; margin: var(--space-6) 0 var(--space-3);">
-                  <h4 style="margin: 0;">Recent</h4>
-                  <a class="btn btn-ghost" style="padding: 0; font-size: 12px; cursor: pointer;" sc-camel-on-click="{{ openOverlay_search }}">Search</a>
-                </div>
-                <div class="card elev-sm" style="padding: 0; gap: 0;">
-                  <sc-for list="{{ transactions }}" as="t" hint-placeholder-count="5">
-                    <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ t.select }}">
-                      <div style="width: 30px; height: 30px; flex: none; background: #c0c0c0; display: flex; align-items: center; justify-content: center; color: var(--color-accent); overflow: hidden; background-image: {{ t.bgImage }}; background-size: cover; background-position: center;">
-                        <span style="font-size: 15px; {{ t.iconDisplay }}">{{ t.emoji }}</span>
-                      </div>
-                      <div style="flex: 1;">
-                        <div style="font-size: 14px; font-weight: 500;">{{ t.name }}</div>
-                        <div style="font-size: 11px; color: var(--color-neutral-600);">{{ t.category }} · {{ t.dateLabel }}</div>
-                      </div>
-                      <div style="font-size: 14px; font-weight: 600; color: {{ t.amountColor }};">{{ t.signedAmountLabel }}</div>
+                <div class="card elev-sm" style="padding: 0; overflow: hidden; margin-top: var(--space-6);">
+                  <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider);">
+                    <div style="display: flex; gap: var(--space-4);">
+                      <button type="button" style="background: none; border: none; padding: 0; font: 600 14px var(--font-heading); cursor: pointer; color: {{ recentTabColor }};" sc-camel-on-click="{{ showRecentTab }}">Recent</button>
+                      <button type="button" style="background: none; border: none; padding: 0; font: 600 14px var(--font-heading); cursor: pointer; color: {{ categoriesTabColor }};" sc-camel-on-click="{{ showCategoriesTab }}">Categories</button>
                     </div>
-                  </sc-for>
-                </div>
+                    <sc-if value="{{ isRecentTab }}" hint-placeholder-val="{{ true }}">
+                      <a class="btn btn-ghost" style="padding: 0; font-size: 12px; cursor: pointer;" sc-camel-on-click="{{ openOverlay_search }}">Search</a>
+                    </sc-if>
+                    <sc-if value="{{ isCategoriesTab }}" hint-placeholder-val="{{ false }}">
+                      <a class="btn btn-ghost" style="padding: 0; font-size: 12px; cursor: pointer;" sc-camel-on-click="{{ openOverlay_budgets }}">Budgets</a>
+                    </sc-if>
+                  </div>
 
-                <sc-if value="{{ activeCategories.length }}" hint-placeholder-val="{{ true }}">
-                  <div style="display: flex; justify-content: space-between; align-items: baseline; margin: var(--space-6) 0 var(--space-3);">
-                    <h4 style="margin: 0;">Categories</h4>
-                    <a class="btn btn-ghost" style="padding: 0; font-size: 12px; cursor: pointer;" sc-camel-on-click="{{ openOverlay_budgets }}">Budgets</a>
-                  </div>
-                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
-                    <sc-for list="{{ activeCategories }}" as="cat" hint-placeholder-count="6">
-                      <div class="card elev-sm" style="padding: var(--space-3); gap: var(--space-2);">
-                        <div style="width: 32px; height: 32px; background: #c0c0c0; display: flex; align-items: center; justify-content: center; font-size: 17px;">{{ cat.emoji }}</div>
-                        <div style="font-size: 13px; font-weight: 600; font-family: var(--font-heading);">{{ cat.name }}</div>
-                        <div style="font-size: 16px; font-weight: 600;">₱{{ cat.spentLabel }} <span style="font-size: 11px; font-weight: 400; color: var(--color-neutral-600);">of ₱{{ cat.budgetLabel }}</span></div>
-                        <div style="height: 3px; background: var(--color-neutral-200);"><div style="height: 100%; width: {{ cat.pctLabel }}; background: {{ cat.barColor }};"></div></div>
+                  <sc-if value="{{ isRecentTab }}" hint-placeholder-val="{{ true }}">
+                    <div>
+                      <sc-for list="{{ transactions }}" as="t" hint-placeholder-count="5">
+                        <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ t.select }}">
+                          <div style="width: 30px; height: 30px; flex: none; background: #c0c0c0; display: flex; align-items: center; justify-content: center; color: var(--color-accent); overflow: hidden; background-image: {{ t.bgImage }}; background-size: cover; background-position: center;">
+                            <span style="font-size: 15px; {{ t.iconDisplay }}">{{ t.emoji }}</span>
+                          </div>
+                          <div style="flex: 1;">
+                            <div style="font-size: 14px; font-weight: 500;">{{ t.name }}</div>
+                            <div style="font-size: 11px; color: var(--color-neutral-600);">{{ t.category }} · {{ t.dateLabel }}</div>
+                          </div>
+                          <div style="font-size: 14px; font-weight: 600; color: {{ t.amountColor }};">{{ t.signedAmountLabel }}</div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+
+                  <sc-if value="{{ isCategoriesTab }}" hint-placeholder-val="{{ false }}">
+                    <sc-if value="{{ activeCategories.length }}" hint-placeholder-val="{{ true }}">
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); padding: var(--space-4);">
+                        <sc-for list="{{ activeCategories }}" as="cat" hint-placeholder-count="6">
+                          <div class="card elev-sm" style="padding: var(--space-3); gap: var(--space-2);">
+                            <div style="width: 32px; height: 32px; background: #c0c0c0; display: flex; align-items: center; justify-content: center; font-size: 17px;">{{ cat.emoji }}</div>
+                            <div style="font-size: 13px; font-weight: 600; font-family: var(--font-heading);">{{ cat.name }}</div>
+                            <div style="font-size: 16px; font-weight: 600;">₱{{ cat.spentLabel }} <span style="font-size: 11px; font-weight: 400; color: var(--color-neutral-600);">of ₱{{ cat.budgetLabel }}</span></div>
+                            <div style="height: 3px; background: var(--color-neutral-200);"><div style="height: 100%; width: {{ cat.pctLabel }}; background: {{ cat.barColor }};"></div></div>
+                          </div>
+                        </sc-for>
                       </div>
-                    </sc-for>
-                  </div>
-                </sc-if>
+                    </sc-if>
+                    <sc-if value="{{ !activeCategories.length }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding: var(--space-6) var(--space-4); text-align: center; color: var(--color-neutral-600); font-size: 13px;">No categorized spending yet — add a transaction to see it here.</div>
+                    </sc-if>
+                  </sc-if>
+                </div>
 
                 <button class="btn btn-primary btn-block" style="margin-top: var(--space-6); height: 48px; font-size: 15px; gap: 8px;" sc-camel-on-click="{{ openOverlay_add }}">
                   <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>
@@ -389,13 +403,21 @@
                 <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="6">
                   <div class="card elev-sm" style="padding: var(--space-3);">
                     <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);">
-                      <div style="width: 26px; height: 26px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 15px;">{{ cat.emoji }}</div>
+                      <button type="button" aria-label="Change emoji" sc-camel-on-click="{{ cat.startEditEmoji }}" style="width: 26px; height: 26px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 15px; background: none; border: none; cursor: pointer; padding: 0;">{{ cat.emoji }}</button>
                       <input class="input" type="text" value="{{ cat.name }}" sc-camel-on-change="{{ cat.onNameChange }}" style="flex: 1; font-size: 14px; font-weight: 600; font-family: var(--font-heading); padding: 4px 6px;">
                       <div style="display: flex; align-items: baseline; gap: 2px;"><span style="font-size: 13px;">₱</span><input class="input" type="number" value="{{ cat.budget }}" sc-camel-on-change="{{ cat.onBudgetChange }}" style="width: 64px; padding: 4px 6px; text-align: right;"></div>
                       <button class="btn btn-secondary btn-icon" aria-label="Delete category" sc-camel-on-click="{{ cat.remove }}" style="flex: none; width: 28px; height: 28px;">
                         <svg width="12" height="12" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>
                       </button>
                     </div>
+                    <sc-if value="{{ cat.isEditingEmoji }}" hint-placeholder-val="{{ false }}">
+                      <div style="display: flex; flex-wrap: wrap; gap: 6px; padding: var(--space-2) 0; border-top: 1px solid var(--color-divider); margin-top: var(--space-1);">
+                        <input class="input" type="text" placeholder="Or type/paste any emoji" sc-camel-on-change="{{ cat.onEmojiTextChange }}" style="width: 100%; margin-bottom: 4px;">
+                        <sc-for list="{{ cat.emojiOptions }}" as="e" hint-placeholder-count="20">
+                          <button type="button" sc-camel-on-click="{{ e.pick }}" style="width: 28px; height: 28px; font-size: 14px; background: var(--color-neutral-100); border: 1px solid var(--color-divider); cursor: pointer; display: flex; align-items: center; justify-content: center; {{ e.highlight }}">{{ e.emoji }}</button>
+                        </sc-for>
+                      </div>
+                    </sc-if>
                     <div style="height: 4px; background: var(--color-neutral-200);"><div style="height: 100%; width: {{ cat.pctLabel }}; background: {{ cat.barColor }};"></div></div>
                     <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: 4px;">₱{{ cat.spentLabel }} spent</div>
                   </div>
@@ -928,6 +950,7 @@ const DEFAULT_STATE = {
   ],
   notificationsOn: true,
   faceIdOn: false,
+  homeInfoTab: 'recent',
   _categoriesMigratedV2: true,
   savingsGoals: [
     { id: 'g1', name: 'Emergency fund', saved: 2400, target: 5000 },
@@ -953,7 +976,7 @@ function loadPersisted() {
     return { ...DEFAULT_STATE, ...parsed, budgets, categoryEmojis, _categoriesMigratedV2: true };
   } catch (e) { return DEFAULT_STATE; }
 }
-const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'budgets', 'categoryEmojis', 'transactions', 'notificationsOn', 'faceIdOn', 'savingsGoals', '_categoriesMigratedV2'];
+const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'budgets', 'categoryEmojis', 'transactions', 'notificationsOn', 'faceIdOn', 'savingsGoals', 'homeInfoTab', '_categoriesMigratedV2'];
 
 function formatDateLabel(iso) {
   const d = new Date(iso + 'T00:00:00');
@@ -990,6 +1013,7 @@ class Component {
       newCategoryBudget: '',
       newCategoryEmoji: '',
       addingNewCategory: false,
+      editingEmojiFor: null,
     };
     this.persist(); // lock in the one-time category migration flag right away
   }
@@ -1129,6 +1153,17 @@ class Component {
       newCategoryName: '', newCategoryBudget: '', newCategoryEmoji: '',
     }));
   };
+  showRecentTab = () => this.setState({ homeInfoTab: 'recent' });
+  showCategoriesTab = () => this.setState({ homeInfoTab: 'categories' });
+
+  startEditEmoji = (name) => this.setState({ editingEmojiFor: this.state.editingEmojiFor === name ? null : name });
+  pickEmojiFor = (name, emoji) => this.setState(s => ({ categoryEmojis: { ...s.categoryEmojis, [name]: emoji }, editingEmojiFor: null }));
+  onCategoryEmojiTextChange = (name, e) => {
+    const val = e.target.value;
+    if (!val) return;
+    this.setState(s => ({ categoryEmojis: { ...s.categoryEmojis, [name]: val }, editingEmojiFor: null }));
+  };
+
   removeCategory = (name) => this.setState(s => {
     const budgets = { ...s.budgets };
     delete budgets[name];
@@ -1293,6 +1328,14 @@ class Component {
         barColor: this.barColorFor(pct),
         iconPath: CATEGORY_ICONS[name] || CATEGORY_ICONS.Other,
         emoji: this.state.categoryEmojis[name] || '📦',
+        isEditingEmoji: this.state.editingEmojiFor === name,
+        startEditEmoji: () => this.startEditEmoji(name),
+        emojiOptions: EMOJI_PALETTE.map(e => ({
+          emoji: e,
+          pick: () => this.pickEmojiFor(name, e),
+          highlight: (this.state.categoryEmojis[name] || '📦') === e ? 'border-color: var(--color-accent); background: var(--color-accent-100);' : '',
+        })),
+        onEmojiTextChange: (e) => this.onCategoryEmojiTextChange(name, e),
         onBudgetChange: (e) => this.onBudgetChange(name, e),
         onNameChange: (e) => this.onCategoryNameChange(name, e),
         remove: () => this.removeCategory(name),
@@ -1370,6 +1413,12 @@ class Component {
       totalBalanceLabel: totalBalance.toFixed(2),
       activeWalletName: activeWallet.name,
       activeWalletBalance: activeWallet.balance,
+      isRecentTab: this.state.homeInfoTab !== 'categories',
+      isCategoriesTab: this.state.homeInfoTab === 'categories',
+      showRecentTab: this.showRecentTab,
+      showCategoriesTab: this.showCategoriesTab,
+      recentTabColor: this.state.homeInfoTab !== 'categories' ? 'var(--color-text)' : 'var(--color-neutral-500)',
+      categoriesTabColor: this.state.homeInfoTab === 'categories' ? 'var(--color-text)' : 'var(--color-neutral-500)',
       onWalletBalanceChange: this.onWalletBalanceChange,
       openOverlay_wallets: () => this.openOverlay('wallets'),
       openOverlay_history: () => this.openOverlay('history'),
