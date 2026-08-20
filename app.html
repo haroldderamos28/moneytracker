@@ -112,7 +112,7 @@
                   <sc-for list="{{ transactions }}" as="t" hint-placeholder-count="5">
                     <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ t.select }}">
                       <div style="width: 30px; height: 30px; flex: none; background: #c0c0c0; display: flex; align-items: center; justify-content: center; color: var(--color-accent); overflow: hidden; background-image: {{ t.bgImage }}; background-size: cover; background-position: center;">
-                        <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="{{ t.iconDisplay }}"><path d="M12 2v20M2 12h20"></path></svg>
+                        <span style="font-size: 15px; {{ t.iconDisplay }}">{{ t.emoji }}</span>
                       </div>
                       <div style="flex: 1;">
                         <div style="font-size: 14px; font-weight: 500;">{{ t.name }}</div>
@@ -131,9 +131,7 @@
                   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
                     <sc-for list="{{ activeCategories }}" as="cat" hint-placeholder-count="6">
                       <div class="card elev-sm" style="padding: var(--space-3); gap: var(--space-2);">
-                        <div style="width: 32px; height: 32px; background: #c0c0c0; display: flex; align-items: center; justify-content: center; color: var(--color-accent);">
-                          <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="{{ cat.iconPath }}"></path></svg>
-                        </div>
+                        <div style="width: 32px; height: 32px; background: #c0c0c0; display: flex; align-items: center; justify-content: center; font-size: 17px;">{{ cat.emoji }}</div>
                         <div style="font-size: 13px; font-weight: 600; font-family: var(--font-heading);">{{ cat.name }}</div>
                         <div style="font-size: 16px; font-weight: 600;">₱{{ cat.spentLabel }}</div>
                         <div style="height: 3px; background: var(--color-neutral-200);"><div style="height: 100%; width: {{ cat.pctLabel }}; background: {{ cat.barColor }};"></div></div>
@@ -391,6 +389,7 @@
                 <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="6">
                   <div class="card elev-sm" style="padding: var(--space-3);">
                     <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);">
+                      <div style="width: 26px; height: 26px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 15px;">{{ cat.emoji }}</div>
                       <input class="input" type="text" value="{{ cat.name }}" sc-camel-on-change="{{ cat.onNameChange }}" style="flex: 1; font-size: 14px; font-weight: 600; font-family: var(--font-heading); padding: 4px 6px;">
                       <div style="display: flex; align-items: baseline; gap: 2px;"><span style="font-size: 13px;">₱</span><input class="input" type="number" value="{{ cat.budget }}" sc-camel-on-change="{{ cat.onBudgetChange }}" style="width: 64px; padding: 4px 6px; text-align: right;"></div>
                       <button class="btn btn-secondary btn-icon" aria-label="Delete category" sc-camel-on-click="{{ cat.remove }}" style="flex: none; width: 28px; height: 28px;">
@@ -411,6 +410,18 @@
                 <div class="field">
                   <label>Monthly budget</label>
                   <input class="input" type="number" placeholder="0.00" value="{{ newCategoryBudget }}" sc-camel-on-change="{{ onNewCategoryBudgetChange }}">
+                </div>
+                <div class="field">
+                  <label>Emoji</label>
+                  <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);">
+                    <div style="width: 40px; height: 40px; flex: none; background: var(--color-neutral-100); display: flex; align-items: center; justify-content: center; font-size: 20px;">{{ newCategoryEmoji }}</div>
+                    <input class="input" type="text" placeholder="Or type/paste any emoji" value="{{ newCategoryEmoji }}" sc-camel-on-change="{{ onNewCategoryEmojiChange }}" style="flex: 1;">
+                  </div>
+                  <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <sc-for list="{{ emojiPalette }}" as="e" hint-placeholder-count="20">
+                      <button type="button" sc-camel-on-click="{{ e.pick }}" style="width: 32px; height: 32px; font-size: 16px; background: var(--color-neutral-100); border: 1px solid var(--color-divider); cursor: pointer; display: flex; align-items: center; justify-content: center; {{ e.highlight }}">{{ e.emoji }}</button>
+                    </sc-for>
+                  </div>
                 </div>
                 <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ addCategory }}">Add category</button>
               </div>
@@ -533,16 +544,24 @@
                 <div class="field" style="margin-top: var(--space-3);">
                   <label>Category</label>
                   <sc-if value="{{ addingNewCategory }}" hint-placeholder-val="{{ false }}">
-                    <div style="display: flex; gap: var(--space-2); align-items: center;">
+                    <div style="display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2);">
+                      <div style="width: 40px; height: 40px; flex: none; background: var(--color-neutral-100); display: flex; align-items: center; justify-content: center; font-size: 20px;">{{ newCategoryEmoji }}</div>
                       <input class="input" type="text" placeholder="New category name" value="{{ newCategoryName }}" sc-camel-on-change="{{ onNewCategoryNameChange }}" style="flex: 1;">
-                      <button class="btn btn-primary" style="flex: none; height: 40px; padding: 0 14px;" sc-camel-on-click="{{ confirmNewCategoryInline }}">Add</button>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--space-2);">
+                      <sc-for list="{{ emojiPalette }}" as="e" hint-placeholder-count="20">
+                        <button type="button" sc-camel-on-click="{{ e.pick }}" style="width: 30px; height: 30px; font-size: 15px; background: var(--color-neutral-100); border: 1px solid var(--color-divider); cursor: pointer; display: flex; align-items: center; justify-content: center; {{ e.highlight }}">{{ e.emoji }}</button>
+                      </sc-for>
+                    </div>
+                    <div style="display: flex; gap: var(--space-2);">
+                      <button class="btn btn-primary" style="flex: 1; height: 40px;" sc-camel-on-click="{{ confirmNewCategoryInline }}">Add</button>
                       <button class="btn btn-secondary" style="flex: none; height: 40px; padding: 0 14px;" sc-camel-on-click="{{ cancelNewCategoryInline }}">Cancel</button>
                     </div>
                   </sc-if>
                   <sc-if value="{{ !addingNewCategory }}" hint-placeholder-val="{{ true }}">
                     <sc-raw-select class="input" value="{{ formCategory }}" sc-camel-on-change="{{ onFormCategoryChange }}">
-                      <sc-for list="{{ categoryNames }}" as="name" hint-placeholder-count="6">
-                        <option value="{{ name }}">{{ name }}</option>
+                      <sc-for list="{{ categoryOptions }}" as="opt" hint-placeholder-count="6">
+                        <option value="{{ opt.name }}">{{ opt.emoji }} {{ opt.name }}</option>
                       </sc-for>
                       <option value="__new__">+ Add new category</option>
                     </sc-raw-select>
@@ -594,8 +613,8 @@
                   <div class="field">
                     <label>Category</label>
                     <sc-raw-select class="input" value="{{ selectedTx.category }}" sc-camel-on-change="{{ onSelectedCategoryChange }}">
-                      <sc-for list="{{ categoryNames }}" as="name" hint-placeholder-count="6">
-                        <option value="{{ name }}">{{ name }}</option>
+                      <sc-for list="{{ categoryOptions }}" as="opt" hint-placeholder-count="6">
+                        <option value="{{ opt.name }}">{{ opt.emoji }} {{ opt.name }}</option>
                       </sc-for>
                     </sc-raw-select>
                   </div>
@@ -869,6 +888,13 @@ const CATEGORY_ICONS = {
   Other: 'M12 2v20M2 12h20',
 };
 
+const CATEGORY_EMOJIS_DEFAULT = {
+  Gas: '⛽', Clothing: '👕', Shopping: '🛍️', Groceries: '🛒', Dining: '🍽️', Transport: '🚌',
+  Bills: '🧾', Entertainment: '🎬', Health: '❤️', Education: '📚', Rent: '🏠',
+  Subscriptions: '🔁', 'Personal Care': '💇', Travel: '✈️', Gifts: '🎁', Pets: '🐾',
+};
+const EMOJI_PALETTE = ['🍔','🚗','🛍️','🏠','🎬','🎮','✈️','💊','❤️','📚','🎁','🐾','💇','🔁','🧾','💡','📱','🎵','⚽','☕'];
+
 const QUICK_ADDS = [
   { name: 'Jeepney fare', category: 'Transport', amount: 13 },
   { name: 'Coffee', category: 'Dining', amount: 120 },
@@ -892,6 +918,7 @@ const DEFAULT_STATE = {
     Bills: 800, Entertainment: 200, Health: 300, Education: 250, Rent: 4000,
     Subscriptions: 150, 'Personal Care': 150, Travel: 300, Gifts: 100, Pets: 150,
   },
+  categoryEmojis: { ...CATEGORY_EMOJIS_DEFAULT },
   transactions: [
     { id: 1, name: 'Shell Gas Station', category: 'Gas', type: 'expense', walletId: 'cash', amount: 42.10, dateISO: '2026-08-15', photo: null },
     { id: 2, name: 'Zara', category: 'Clothing', type: 'expense', walletId: 'cash', amount: 89.99, dateISO: '2026-08-14', photo: null },
@@ -915,16 +942,18 @@ function loadPersisted() {
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw);
     let budgets = parsed.budgets || {};
-    // One-time migration: bring in any newly-added default categories for
-    // people who already have older saved data, without reintroducing
-    // categories they've since deleted on repeat visits.
+    let categoryEmojis = parsed.categoryEmojis || {};
+    // One-time migration: bring in any newly-added default categories (and
+    // their emoji) for people who already have older saved data, without
+    // reintroducing categories they've since deleted on repeat visits.
     if (!parsed._categoriesMigratedV2) {
       budgets = { ...DEFAULT_STATE.budgets, ...budgets };
+      categoryEmojis = { ...DEFAULT_STATE.categoryEmojis, ...categoryEmojis };
     }
-    return { ...DEFAULT_STATE, ...parsed, budgets, _categoriesMigratedV2: true };
+    return { ...DEFAULT_STATE, ...parsed, budgets, categoryEmojis, _categoriesMigratedV2: true };
   } catch (e) { return DEFAULT_STATE; }
 }
-const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'budgets', 'transactions', 'notificationsOn', 'faceIdOn', 'savingsGoals', '_categoriesMigratedV2'];
+const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'budgets', 'categoryEmojis', 'transactions', 'notificationsOn', 'faceIdOn', 'savingsGoals', '_categoriesMigratedV2'];
 
 function formatDateLabel(iso) {
   const d = new Date(iso + 'T00:00:00');
@@ -959,6 +988,7 @@ class Component {
       newGoalTarget: '',
       newCategoryName: '',
       newCategoryBudget: '',
+      newCategoryEmoji: '',
       addingNewCategory: false,
     };
     this.persist(); // lock in the one-time category migration flag right away
@@ -1044,10 +1074,15 @@ class Component {
   confirmNewCategoryInline = () => {
     const name = this.state.newCategoryName.trim();
     if (!name) { this.setState({ addingNewCategory: false }); return; }
+    const emoji = this.state.newCategoryEmoji || '📦';
     if (this.state.budgets[name] === undefined) {
-      this.setState(s => ({ budgets: { ...s.budgets, [name]: 0 }, formCategory: name, addingNewCategory: false, newCategoryName: '' }));
+      this.setState(s => ({
+        budgets: { ...s.budgets, [name]: 0 },
+        categoryEmojis: { ...s.categoryEmojis, [name]: emoji },
+        formCategory: name, addingNewCategory: false, newCategoryName: '', newCategoryEmoji: '',
+      }));
     } else {
-      this.setState({ formCategory: name, addingNewCategory: false, newCategoryName: '' });
+      this.setState({ formCategory: name, addingNewCategory: false, newCategoryName: '', newCategoryEmoji: '' });
     }
   };
   cancelNewCategoryInline = () => this.setState({ addingNewCategory: false, newCategoryName: '' });
@@ -1081,16 +1116,25 @@ class Component {
 
   onNewCategoryNameChange = (e) => this.setState({ newCategoryName: e.target.value });
   onNewCategoryBudgetChange = (e) => this.setState({ newCategoryBudget: e.target.value });
+  pickNewCategoryEmoji = (emoji) => this.setState({ newCategoryEmoji: emoji });
+  onNewCategoryEmojiChange = (e) => this.setState({ newCategoryEmoji: e.target.value });
   addCategory = () => {
     const name = this.state.newCategoryName.trim();
     if (!name || this.state.budgets[name] !== undefined) return;
     const budget = parseFloat(this.state.newCategoryBudget) || 0;
-    this.setState(s => ({ budgets: { ...s.budgets, [name]: budget }, newCategoryName: '', newCategoryBudget: '' }));
+    const emoji = this.state.newCategoryEmoji || '📦';
+    this.setState(s => ({
+      budgets: { ...s.budgets, [name]: budget },
+      categoryEmojis: { ...s.categoryEmojis, [name]: emoji },
+      newCategoryName: '', newCategoryBudget: '', newCategoryEmoji: '',
+    }));
   };
   removeCategory = (name) => this.setState(s => {
     const budgets = { ...s.budgets };
     delete budgets[name];
-    return { budgets };
+    const categoryEmojis = { ...s.categoryEmojis };
+    delete categoryEmojis[name];
+    return { budgets, categoryEmojis };
   });
   onCategoryNameChange = (oldName, e) => {
     const newName = e.target.value.trim();
@@ -1101,8 +1145,10 @@ class Component {
     this.setState(s => {
       const budgets = {};
       Object.keys(s.budgets).forEach(k => { budgets[k === oldName ? newName : k] = s.budgets[k]; });
+      const categoryEmojis = {};
+      Object.keys(s.categoryEmojis).forEach(k => { categoryEmojis[k === oldName ? newName : k] = s.categoryEmojis[k]; });
       const transactions = s.transactions.map(t => t.category === oldName ? { ...t, category: newName } : t);
-      return { budgets, transactions };
+      return { budgets, categoryEmojis, transactions };
     });
   };
 
@@ -1217,8 +1263,9 @@ class Component {
         dateLabel: formatDateLabel(t.dateISO),
         signedAmountLabel: (isExpense ? '-₱' : '+₱') + t.amount.toFixed(2),
         amountColor: isExpense ? 'var(--color-text)' : '#1e7a34',
+        emoji: t.type === 'income' ? '💰' : (this.state.categoryEmojis[t.category] || '📦'),
         bgImage: t.photo ? `url(${t.photo})` : 'none',
-        iconDisplay: t.photo ? 'display:none' : 'display:block',
+        iconDisplay: t.photo ? 'display:none' : 'display:flex',
         photoDisplay: t.photo ? 'block' : 'none',
         select: () => this.selectTx(t.id),
       };
@@ -1243,6 +1290,7 @@ class Component {
         pctLabel: pct.toFixed(0) + '%',
         barColor: this.barColorFor(pct),
         iconPath: CATEGORY_ICONS[name] || CATEGORY_ICONS.Other,
+        emoji: this.state.categoryEmojis[name] || '📦',
         onBudgetChange: (e) => this.onBudgetChange(name, e),
         onNameChange: (e) => this.onCategoryNameChange(name, e),
         remove: () => this.removeCategory(name),
@@ -1251,6 +1299,7 @@ class Component {
 
     const totalSpent = Object.values(spendByCategory).reduce((a, b) => a + b, 0);
     const activeCategories = categories.filter(c => c.spent > 0);
+    const categoryOptions = categoryNames.map(name => ({ name, emoji: this.state.categoryEmojis[name] || '📦' }));
     const sortedByCat = [...categories].filter(c => c.spent > 0).sort((a, b) => b.spent - a.spent);
     const ramp = ['var(--color-accent-900)', 'var(--color-accent-700)', 'var(--color-accent-600)', 'var(--color-accent-500)', 'var(--color-accent-400)', 'var(--color-accent-300)'];
     const analyticsRows = sortedByCat.map((c, i) => ({ name: c.name, spentLabel: c.spentLabel, color: ramp[i % ramp.length] }));
@@ -1334,6 +1383,7 @@ class Component {
       categories,
       activeCategories,
       categoryNames,
+      categoryOptions,
       totalSpentLabel: totalSpent.toFixed(2),
       activeCategoryCount: sortedByCat.length,
       analyticsRows,
@@ -1363,8 +1413,15 @@ class Component {
       addSavingsGoal: this.addSavingsGoal,
       newCategoryName: this.state.newCategoryName,
       newCategoryBudget: this.state.newCategoryBudget,
+      newCategoryEmoji: this.state.newCategoryEmoji || '📦',
       onNewCategoryNameChange: this.onNewCategoryNameChange,
       onNewCategoryBudgetChange: this.onNewCategoryBudgetChange,
+      onNewCategoryEmojiChange: this.onNewCategoryEmojiChange,
+      emojiPalette: EMOJI_PALETTE.map(e => ({
+        emoji: e,
+        pick: () => this.pickNewCategoryEmoji(e),
+        highlight: (this.state.newCategoryEmoji || '📦') === e ? 'border-color: var(--color-accent); background: var(--color-accent-100);' : '',
+      })),
       addCategory: this.addCategory,
       overlayX: overlay ? '0%' : '100%',
       overlayIsNotifications: overlay === 'notifications',
