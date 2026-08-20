@@ -898,9 +898,14 @@ class Component {
 
   setState(update) {
     const patch = typeof update === 'function' ? update(this.state) : update;
+    const prevTab = this.state.tab;
+    const prevOverlay = this.state.overlay;
     this.state = { ...this.state, ...patch };
     this.persist();
     this._render();
+    if (this.state.tab !== prevTab || this.state.overlay !== prevOverlay) {
+      window.scrollTo(0, 0);
+    }
   }
 
   persist() {
