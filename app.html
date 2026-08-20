@@ -389,7 +389,7 @@
                 <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="6">
                   <div class="card elev-sm" style="padding: var(--space-3);">
                     <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);">
-                      <div style="flex: 1; font-size: 14px; font-weight: 600; font-family: var(--font-heading);">{{ cat.name }}</div>
+                      <input class="input" type="text" value="{{ cat.name }}" sc-camel-on-change="{{ cat.onNameChange }}" style="flex: 1; font-size: 14px; font-weight: 600; font-family: var(--font-heading); padding: 4px 6px;">
                       <div style="display: flex; align-items: baseline; gap: 2px;"><span style="font-size: 13px;">₱</span><input class="input" type="number" value="{{ cat.budget }}" sc-camel-on-change="{{ cat.onBudgetChange }}" style="width: 64px; padding: 4px 6px; text-align: right;"></div>
                       <button class="btn btn-secondary btn-icon" aria-label="Delete category" sc-camel-on-click="{{ cat.remove }}" style="flex: none; width: 28px; height: 28px;">
                         <svg width="12" height="12" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>
@@ -789,6 +789,16 @@ const CATEGORY_ICONS = {
   Groceries: 'M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12',
   Dining: 'M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2 M7 2v20 M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7',
   Transport: 'M5 17H3v-6l2-5h12l2 5h2v6h-2 M5 17h10',
+  Bills: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
+  Entertainment: 'M9 18V5l12-2v13 M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0z M21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
+  Health: 'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z',
+  Education: 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z',
+  Rent: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10',
+  Subscriptions: 'M17 1l4 4-4 4 M3 11V9a4 4 0 0 1 4-4h14 M7 23l-4-4 4-4 M21 13v2a4 4 0 0 1-4 4H3',
+  'Personal Care': 'M6 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M20 4 8.12 15.88 M14.47 14.48 20 20 M8.12 8.12 12 12',
+  Travel: 'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+  Gifts: 'M20 12v10H4V12 M2 7h20v5H2z M12 22V7 M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z',
+  Pets: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M8 14s1.5 2 4 2 4-2 4-2 M9 9h.01 M15 9h.01',
   Other: 'M12 2v20M2 12h20',
 };
 
@@ -810,7 +820,11 @@ const DEFAULT_STATE = {
     { id: 'ewallet', name: 'E-wallet', balance: 500 },
   ],
   activeWalletId: 'cash',
-  budgets: { Gas: 300, Clothing: 400, Shopping: 450, Groceries: 450, Dining: 300, Transport: 200 },
+  budgets: {
+    Gas: 300, Clothing: 400, Shopping: 450, Groceries: 450, Dining: 300, Transport: 200,
+    Bills: 800, Entertainment: 200, Health: 300, Education: 250, Rent: 4000,
+    Subscriptions: 150, 'Personal Care': 150, Travel: 300, Gifts: 100, Pets: 150,
+  },
   transactions: [
     { id: 1, name: 'Shell Gas Station', category: 'Gas', type: 'expense', walletId: 'cash', amount: 42.10, dateISO: '2026-08-15', photo: null },
     { id: 2, name: 'Zara', category: 'Clothing', type: 'expense', walletId: 'cash', amount: 89.99, dateISO: '2026-08-14', photo: null },
@@ -978,6 +992,19 @@ class Component {
     delete budgets[name];
     return { budgets };
   });
+  onCategoryNameChange = (oldName, e) => {
+    const newName = e.target.value.trim();
+    if (!newName || newName === oldName || this.state.budgets[newName] !== undefined) {
+      this._render(); // reset the field's displayed text back to the authoritative name
+      return;
+    }
+    this.setState(s => {
+      const budgets = {};
+      Object.keys(s.budgets).forEach(k => { budgets[k === oldName ? newName : k] = s.budgets[k]; });
+      const transactions = s.transactions.map(t => t.category === oldName ? { ...t, category: newName } : t);
+      return { budgets, transactions };
+    });
+  };
 
   onNewGoalNameChange = (e) => this.setState({ newGoalName: e.target.value });
   onNewGoalTargetChange = (e) => this.setState({ newGoalTarget: e.target.value });
@@ -1117,6 +1144,7 @@ class Component {
         barColor: this.barColorFor(pct),
         iconPath: CATEGORY_ICONS[name] || CATEGORY_ICONS.Other,
         onBudgetChange: (e) => this.onBudgetChange(name, e),
+        onNameChange: (e) => this.onCategoryNameChange(name, e),
         remove: () => this.removeCategory(name),
       };
     });
