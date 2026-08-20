@@ -201,29 +201,43 @@
                   <h2 style="margin: 0; font-size: 26px;">Savings</h2>
                 </div>
                 <div class="card elev-sm" style="padding: var(--space-4);">
-                  <div class="card-kicker">Saved this month</div>
+                  <div class="card-kicker">Total saved toward goals</div>
                   <div style="display: flex; align-items: baseline; gap: 10px;">
-                    <div style="font-family: var(--font-heading); font-weight: 800; font-size: 32px; line-height: 1;">₱340.00</div>
-                    <span class="tag" style="background: #dcf0df; color: #1e7a34;">+12% vs Jul</span>
+                    <div style="font-family: var(--font-heading); font-weight: 800; font-size: 32px; line-height: 1;">₱{{ totalSavedLabel }}</div>
                   </div>
                 </div>
                 <div style="margin: var(--space-6) 0 var(--space-3);"><h4 style="margin: 0;">Goals</h4></div>
                 <div style="display: flex; flex-direction: column; gap: var(--space-3);">
-                  <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-2);">
-                    <div class="card-title" style="font-size: 15px;">Emergency fund</div>
-                    <div style="height: 6px; background: var(--color-neutral-200); margin-top: 2px;"><div style="height: 100%; width: 48%; background: #d99a1b;"></div></div>
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--color-neutral-600);"><span>₱2,400 of ₱5,000</span><span>48%</span></div>
+                  <sc-for list="{{ savingsGoals }}" as="g" hint-placeholder-count="3">
+                    <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-2);">
+                      <div style="display: flex; align-items: center; gap: var(--space-2);">
+                        <div class="card-title" style="font-size: 15px; flex: 1;">{{ g.name }}</div>
+                        <button class="btn btn-secondary btn-icon" aria-label="Delete goal" sc-camel-on-click="{{ g.remove }}" style="flex: none; width: 28px; height: 28px;">
+                          <svg width="12" height="12" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>
+                        </button>
+                      </div>
+                      <div style="height: 6px; background: var(--color-neutral-200); margin-top: 2px;"><div style="height: 100%; width: {{ g.pctLabel }}; background: {{ g.barColor }};"></div></div>
+                      <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--color-neutral-600); margin-top: 4px; gap: 8px;">
+                        <div style="display: flex; align-items: baseline; gap: 3px;">
+                          <span>₱</span><input class="input" type="number" value="{{ g.saved }}" sc-camel-on-change="{{ g.onSavedChange }}" style="width: 58px; padding: 2px 4px; font-size: 12px;">
+                          <span>of ₱</span><input class="input" type="number" value="{{ g.target }}" sc-camel-on-change="{{ g.onTargetChange }}" style="width: 58px; padding: 2px 4px; font-size: 12px;">
+                        </div>
+                        <span style="flex: none; font-weight: 600;">{{ g.pctLabel }}</span>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-3); margin-top: var(--space-3);">
+                  <div class="card-title" style="font-size: 14px;">Add a goal</div>
+                  <div class="field">
+                    <label>Name</label>
+                    <input class="input" type="text" placeholder="e.g. New phone" value="{{ newGoalName }}" sc-camel-on-change="{{ onNewGoalNameChange }}">
                   </div>
-                  <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-2);">
-                    <div class="card-title" style="font-size: 15px;">New laptop</div>
-                    <div style="height: 6px; background: var(--color-neutral-200); margin-top: 2px;"><div style="height: 100%; width: 72%; background: #2f9e44;"></div></div>
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--color-neutral-600);"><span>₱860 of ₱1,200</span><span>72%</span></div>
+                  <div class="field">
+                    <label>Target amount</label>
+                    <input class="input" type="number" placeholder="0.00" value="{{ newGoalTarget }}" sc-camel-on-change="{{ onNewGoalTargetChange }}">
                   </div>
-                  <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-2);">
-                    <div class="card-title" style="font-size: 15px;">Vacation</div>
-                    <div style="height: 6px; background: var(--color-neutral-200); margin-top: 2px;"><div style="height: 100%; width: 21%; background: #c0392b;"></div></div>
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--color-neutral-600);"><span>₱310 of ₱1,500</span><span>21%</span></div>
-                  </div>
+                  <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ addSavingsGoal }}">Add goal</button>
                 </div>
               </div>
             </sc-if>
@@ -377,13 +391,28 @@
                     <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);">
                       <div style="flex: 1; font-size: 14px; font-weight: 600; font-family: var(--font-heading);">{{ cat.name }}</div>
                       <div style="display: flex; align-items: baseline; gap: 2px;"><span style="font-size: 13px;">₱</span><input class="input" type="number" value="{{ cat.budget }}" sc-camel-on-change="{{ cat.onBudgetChange }}" style="width: 64px; padding: 4px 6px; text-align: right;"></div>
+                      <button class="btn btn-secondary btn-icon" aria-label="Delete category" sc-camel-on-click="{{ cat.remove }}" style="flex: none; width: 28px; height: 28px;">
+                        <svg width="12" height="12" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>
+                      </button>
                     </div>
                     <div style="height: 4px; background: var(--color-neutral-200);"><div style="height: 100%; width: {{ cat.pctLabel }}; background: {{ cat.barColor }};"></div></div>
                     <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: 4px;">₱{{ cat.spentLabel }} spent</div>
                   </div>
                 </sc-for>
               </div>
-              <button class="btn btn-primary btn-block" style="margin-top: var(--space-6); height: 48px;" sc-camel-on-click="{{ closeOverlay }}">Save budgets</button>
+              <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-3); margin-top: var(--space-3);">
+                <div class="card-title" style="font-size: 14px;">Add a category</div>
+                <div class="field">
+                  <label>Name</label>
+                  <input class="input" type="text" placeholder="e.g. Subscriptions" value="{{ newCategoryName }}" sc-camel-on-change="{{ onNewCategoryNameChange }}">
+                </div>
+                <div class="field">
+                  <label>Monthly budget</label>
+                  <input class="input" type="number" placeholder="0.00" value="{{ newCategoryBudget }}" sc-camel-on-change="{{ onNewCategoryBudgetChange }}">
+                </div>
+                <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ addCategory }}">Add category</button>
+              </div>
+              <button class="btn btn-primary btn-block" style="margin-top: var(--space-4); height: 48px;" sc-camel-on-click="{{ closeOverlay }}">Save budgets</button>
             </div>
           </sc-if>
 
@@ -791,6 +820,11 @@ const DEFAULT_STATE = {
   ],
   notificationsOn: true,
   faceIdOn: false,
+  savingsGoals: [
+    { id: 'g1', name: 'Emergency fund', saved: 2400, target: 5000 },
+    { id: 'g2', name: 'New laptop', saved: 860, target: 1200 },
+    { id: 'g3', name: 'Vacation', saved: 310, target: 1500 },
+  ],
 };
 
 function loadPersisted() {
@@ -800,7 +834,7 @@ function loadPersisted() {
     return { ...DEFAULT_STATE, ...JSON.parse(raw) };
   } catch (e) { return DEFAULT_STATE; }
 }
-const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'budgets', 'transactions', 'notificationsOn', 'faceIdOn'];
+const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'budgets', 'transactions', 'notificationsOn', 'faceIdOn', 'savingsGoals'];
 
 function formatDateLabel(iso) {
   const d = new Date(iso + 'T00:00:00');
@@ -831,6 +865,10 @@ class Component {
       searchQuery: '',
       newWalletName: '',
       newWalletBalance: '',
+      newGoalName: '',
+      newGoalTarget: '',
+      newCategoryName: '',
+      newCategoryBudget: '',
     };
   }
 
@@ -927,6 +965,51 @@ class Component {
     this.setState(s => ({ budgets: { ...s.budgets, [category]: val } }));
   };
 
+  onNewCategoryNameChange = (e) => this.setState({ newCategoryName: e.target.value });
+  onNewCategoryBudgetChange = (e) => this.setState({ newCategoryBudget: e.target.value });
+  addCategory = () => {
+    const name = this.state.newCategoryName.trim();
+    if (!name || this.state.budgets[name] !== undefined) return;
+    const budget = parseFloat(this.state.newCategoryBudget) || 0;
+    this.setState(s => ({ budgets: { ...s.budgets, [name]: budget }, newCategoryName: '', newCategoryBudget: '' }));
+  };
+  removeCategory = (name) => this.setState(s => {
+    const budgets = { ...s.budgets };
+    delete budgets[name];
+    return { budgets };
+  });
+
+  onNewGoalNameChange = (e) => this.setState({ newGoalName: e.target.value });
+  onNewGoalTargetChange = (e) => this.setState({ newGoalTarget: e.target.value });
+  addSavingsGoal = () => {
+    const name = this.state.newGoalName.trim();
+    if (!name) return;
+    const target = parseFloat(this.state.newGoalTarget) || 0;
+    const id = 'g' + Date.now();
+    this.setState(s => ({ savingsGoals: [...s.savingsGoals, { id, name, saved: 0, target }], newGoalName: '', newGoalTarget: '' }));
+  };
+  removeSavingsGoal = (id) => this.setState(s => ({ savingsGoals: s.savingsGoals.filter(g => g.id !== id) }));
+  onSavingsGoalSavedChange = (id, e) => {
+    const raw = e.target.value;
+    if (raw === '') {
+      this.setState(s => ({ savingsGoals: s.savingsGoals.map(g => g.id === id ? { ...g, saved: '' } : g) }));
+      return;
+    }
+    const val = parseFloat(raw);
+    if (isNaN(val)) return;
+    this.setState(s => ({ savingsGoals: s.savingsGoals.map(g => g.id === id ? { ...g, saved: val } : g) }));
+  };
+  onSavingsGoalTargetChange = (id, e) => {
+    const raw = e.target.value;
+    if (raw === '') {
+      this.setState(s => ({ savingsGoals: s.savingsGoals.map(g => g.id === id ? { ...g, target: '' } : g) }));
+      return;
+    }
+    const val = parseFloat(raw);
+    if (isNaN(val)) return;
+    this.setState(s => ({ savingsGoals: s.savingsGoals.map(g => g.id === id ? { ...g, target: val } : g) }));
+  };
+
   submitExpense = () => {
     const amt = parseFloat(this.state.formAmount) || 0;
     if (amt <= 0) return;
@@ -988,6 +1071,14 @@ class Component {
     return '#2f9e44';
   }
 
+  // Health coloring for savings progress: the closer to the goal, the
+  // healthier (green); far from it reads as "almost empty" (red).
+  savingsColorFor(pct) {
+    if (pct >= 66) return '#2f9e44';
+    if (pct >= 33) return '#d99a1b';
+    return '#c0392b';
+  }
+
   renderVals() {
     const { tab, overlay, transactions, budgets, wallets, activeWalletId, selectedTxId, searchQuery, notificationsOn, faceIdOn, darkMode, formType } = this.state;
 
@@ -1026,6 +1117,7 @@ class Component {
         barColor: this.barColorFor(pct),
         iconPath: CATEGORY_ICONS[name] || CATEGORY_ICONS.Other,
         onBudgetChange: (e) => this.onBudgetChange(name, e),
+        remove: () => this.removeCategory(name),
       };
     });
 
@@ -1054,6 +1146,21 @@ class Component {
 
     const activeWallet = wallets.find(w => w.id === activeWalletId) || wallets[0];
     const totalBalance = wallets.reduce((sum, w) => sum + (parseFloat(w.balance) || 0), 0);
+
+    const savingsGoalsRender = this.state.savingsGoals.map(g => {
+      const saved = parseFloat(g.saved) || 0;
+      const target = parseFloat(g.target) || 0;
+      const pct = target > 0 ? Math.min(100, (saved / target) * 100) : 0;
+      return {
+        ...g,
+        pctLabel: pct.toFixed(0) + '%',
+        barColor: this.savingsColorFor(pct),
+        onSavedChange: (e) => this.onSavingsGoalSavedChange(g.id, e),
+        onTargetChange: (e) => this.onSavingsGoalTargetChange(g.id, e),
+        remove: () => this.removeSavingsGoal(g.id),
+      };
+    });
+    const totalSaved = this.state.savingsGoals.reduce((sum, g) => sum + (parseFloat(g.saved) || 0), 0);
     const walletsRender = wallets.map(w => ({
       ...w,
       bg: w.id === activeWalletId ? 'var(--color-accent)' : 'none',
@@ -1117,6 +1224,18 @@ class Component {
       darkToggleSide: darkMode ? 'right' : 'left',
       toggleDarkMode: this.toggleDarkMode,
       exportCSV: this.exportCSV,
+      savingsGoals: savingsGoalsRender,
+      totalSavedLabel: totalSaved.toFixed(2),
+      newGoalName: this.state.newGoalName,
+      newGoalTarget: this.state.newGoalTarget,
+      onNewGoalNameChange: this.onNewGoalNameChange,
+      onNewGoalTargetChange: this.onNewGoalTargetChange,
+      addSavingsGoal: this.addSavingsGoal,
+      newCategoryName: this.state.newCategoryName,
+      newCategoryBudget: this.state.newCategoryBudget,
+      onNewCategoryNameChange: this.onNewCategoryNameChange,
+      onNewCategoryBudgetChange: this.onNewCategoryBudgetChange,
+      addCategory: this.addCategory,
       overlayX: overlay ? '0%' : '100%',
       overlayIsNotifications: overlay === 'notifications',
       overlayIsSearch: overlay === 'search',
@@ -1166,7 +1285,7 @@ class Component {
   const app = new Component(() => renderFn());
   renderFn = mountApp(templateEl, rootEl, () => app.renderVals());
   renderFn();
-  window.__app = app; // handy for debugging in devtools
+  window.__app = app;
 </script>
 </body>
 </html>
