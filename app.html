@@ -455,15 +455,29 @@
                       </div>
                     </sc-if>
                     <div style="height: 4px; background: var(--color-neutral-200);"><div style="height: 100%; width: {{ cat.pctLabel }}; background: {{ cat.barColor }};"></div></div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
-                      <div style="font-size: 11px; color: var(--color-neutral-600);">₱{{ cat.spentLabel }} spent</div>
-                      <sc-raw-select value="{{ cat.period }}" sc-camel-on-change="{{ cat.onPeriodChange }}" style="font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 999px; border: 1px solid var(--color-divider); background: var(--color-neutral-100); color: var(--color-neutral-700); cursor: pointer;">
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
-                      </sc-raw-select>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px; gap: 6px;">
+                      <div style="font-size: 11px; color: var(--color-neutral-600); flex: none;">₱{{ cat.spentLabel }} spent</div>
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <sc-if value="{{ cat.isCustomPeriod }}" hint-placeholder-val="{{ false }}">
+                          <span style="font-size: 10px; color: var(--color-neutral-600);">every</span>
+                          <input type="number" min="1" value="{{ cat.customDaysRaw }}" sc-camel-on-change="{{ cat.onCustomDaysChange }}" style="width: 34px; font-size: 10px; padding: 2px 4px; border: 1px solid var(--color-divider); background: var(--color-neutral-100);">
+                          <span style="font-size: 10px; color: var(--color-neutral-600);">days</span>
+                        </sc-if>
+                        <sc-raw-select value="{{ cat.period }}" sc-camel-on-change="{{ cat.onPeriodChange }}" style="font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 999px; border: 1px solid var(--color-divider); background: var(--color-neutral-100); color: var(--color-neutral-700); cursor: pointer;">
+                          <option value="daily">Daily</option>
+                          <option value="weekly">Weekly</option>
+                          <option value="monthly">Monthly</option>
+                          <option value="yearly">Yearly</option>
+                          <option value="custom">Custom</option>
+                        </sc-raw-select>
+                      </div>
                     </div>
+                    <sc-if value="{{ cat.hasRollover }}" hint-placeholder-val="{{ false }}">
+                      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--color-divider);">
+                        <div style="font-size: 11px; color: #2f9e44;">+₱{{ cat.rolloverLabel }} rolled over, added to this budget</div>
+                        <button type="button" sc-camel-on-click="{{ cat.saveRollover }}" style="font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--color-accent); background: none; color: var(--color-accent); cursor: pointer;">Save to wallet</button>
+                      </div>
+                    </sc-if>
                   </div>
                 </sc-for>
               </div>
@@ -484,8 +498,15 @@
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
                     <option value="yearly">Yearly</option>
+                    <option value="custom">Custom</option>
                   </sc-raw-select>
                 </div>
+                <sc-if value="{{ isNewCategoryCustom }}" hint-placeholder-val="{{ false }}">
+                  <div class="field">
+                    <label>Every how many days</label>
+                    <input class="input" type="number" min="1" placeholder="7" value="{{ newCategoryCustomDays }}" sc-camel-on-change="{{ onNewCategoryCustomDaysChange }}">
+                  </div>
+                </sc-if>
                 <div class="field">
                   <label>Emoji</label>
                   <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);">
@@ -500,6 +521,20 @@
                 </div>
                 <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ addCategory }}">Add category</button>
               </div>
+              <sc-if value="{{ hasRolloverHistory }}" hint-placeholder-val="{{ false }}">
+                <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin: var(--space-4) 0 var(--space-2);">Rollover history</div>
+                <div class="card elev-sm" style="padding: 0; gap: 0;">
+                  <sc-for list="{{ rolloverHistory }}" as="h" hint-placeholder-count="5">
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider);">
+                      <div>
+                        <div style="font-size: 13px; font-weight: 600;">{{ h.category }} → {{ h.destination }}</div>
+                        <div style="font-size: 11px; color: var(--color-neutral-600);">{{ h.dateISO }}</div>
+                      </div>
+                      <div style="font-size: 13px; font-weight: 700; color: #2f9e44;">₱{{ h.amountLabel }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
               <button class="btn btn-primary btn-block" style="margin-top: var(--space-4); height: 48px;" sc-camel-on-click="{{ closeOverlay }}">Save budgets</button>
             </div>
           </sc-if>
@@ -748,8 +783,15 @@
                         <option value="weekly">Weekly</option>
                         <option value="monthly">Monthly</option>
                         <option value="yearly">Yearly</option>
+                        <option value="custom">Custom</option>
                       </sc-raw-select>
                     </div>
+                    <sc-if value="{{ isNewCategoryCustom }}" hint-placeholder-val="{{ false }}">
+                      <div class="field" style="margin-bottom: var(--space-2);">
+                        <label>Every how many days</label>
+                        <input class="input" type="number" min="1" placeholder="7" value="{{ newCategoryCustomDays }}" sc-camel-on-change="{{ onNewCategoryCustomDaysChange }}">
+                      </div>
+                    </sc-if>
                     <div style="display: flex; gap: var(--space-2);">
                       <button class="btn btn-primary" style="flex: 1; height: 40px;" sc-camel-on-click="{{ confirmNewCategoryInline }}">Add</button>
                       <button class="btn btn-secondary" style="flex: none; height: 40px; padding: 0 14px;" sc-camel-on-click="{{ cancelNewCategoryInline }}">Cancel</button>
@@ -873,6 +915,30 @@
                   <button class="btn btn-secondary" style="flex: 1; height: 42px;" sc-camel-on-click="{{ cancelPendingDelete }}">Cancel</button>
                   <button class="btn btn-block" style="flex: 1; height: 42px; color: #fff; background: #c0392b; justify-content: center;" sc-camel-on-click="{{ executePendingDelete }}">Delete</button>
                 </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ pendingRolloverDecision }}" hint-placeholder-val="{{ false }}">
+            <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 999; padding: 24px; box-sizing: border-box;">
+              <div class="card elev-sm" style="padding: var(--space-5); max-width: 320px; width: 100%; gap: var(--space-3); background: var(--color-surface); max-height: 80vh; overflow-y: auto;">
+                <div style="font-size: 16px; font-weight: 700; font-family: var(--font-heading);">{{ pendingRolloverDecision.category }} had ₱{{ pendingRolloverDecision.amountLabel }} left over</div>
+                <div style="font-size: 13px; color: var(--color-neutral-600);">Add it to this period's budget, save it to your active wallet, or put it toward a goal?</div>
+                <div style="display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2);">
+                  <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ pendingRolloverDecision.addToBudget }}">Add to budget</button>
+                  <button class="btn btn-secondary btn-block" style="height: 44px;" sc-camel-on-click="{{ pendingRolloverDecision.saveToWallet }}">Save to wallet</button>
+                </div>
+                <sc-if value="{{ pendingRolloverDecision.hasGoals }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-neutral-600); margin-top: var(--space-2);">Or put toward a goal</div>
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <sc-for list="{{ pendingRolloverDecision.goalOptions }}" as="g" hint-placeholder-count="3">
+                      <button class="btn btn-secondary btn-block" style="height: 40px; font-size: 13px;" sc-camel-on-click="{{ g.apply }}">{{ g.name }}</button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ hasMoreRollovers }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size: 11px; color: var(--color-neutral-500); text-align: center; margin-top: var(--space-2);">{{ pendingRolloverCount }} to review</div>
+                </sc-if>
               </div>
             </div>
           </sc-if>
@@ -1173,6 +1239,11 @@ const DEFAULT_STATE = {
   },
   categoryEmojis: { ...CATEGORY_EMOJIS_DEFAULT },
   budgetPeriods: {},
+  budgetCustomDays: {},
+  budgetRollovers: {},
+  budgetLastPeriodKey: {},
+  pendingRolloverDecisions: [],
+  rolloverHistory: [],
   transactions: [
     { id: 1, name: 'Shell Gas Station', category: 'Gas', type: 'expense', walletId: 'cash', amount: 42.10, dateISO: '2026-08-15', photo: null },
     { id: 2, name: 'Zara', category: 'Clothing', type: 'expense', walletId: 'cash', amount: 89.99, dateISO: '2026-08-14', photo: null },
@@ -1211,7 +1282,7 @@ function loadPersisted() {
     return { ...DEFAULT_STATE, ...parsed, budgets, categoryEmojis, _categoriesMigratedV2: true };
   } catch (e) { return DEFAULT_STATE; }
 }
-const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'budgets', 'budgetPeriods', 'categoryEmojis', 'transactions', 'notificationsOn', 'savingsGoals', 'homeInfoTab', 'recurringBills', 'receivables', 'userName', 'notifiedThisMonth', '_categoriesMigratedV2'];
+const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'budgets', 'budgetPeriods', 'budgetCustomDays', 'budgetRollovers', 'budgetLastPeriodKey', 'pendingRolloverDecisions', 'rolloverHistory', 'categoryEmojis', 'transactions', 'notificationsOn', 'savingsGoals', 'homeInfoTab', 'recurringBills', 'receivables', 'userName', 'notifiedThisMonth', '_categoriesMigratedV2'];
 
 function formatDateLabel(iso) {
   const d = new Date(iso + 'T00:00:00');
@@ -1234,6 +1305,30 @@ function getWeekBounds(d) {
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
   return { startISO: monday.toISOString().slice(0, 10), endISO: sunday.toISOString().slice(0, 10) };
+}
+const CUSTOM_CYCLE_EPOCH = Date.UTC(2024, 0, 1); // fixed reference point so cycles are consistent
+function customCycleBucket(dateISO, days) {
+  const t = Date.UTC(...dateISO.split('-').map(Number));
+  const daysSinceEpoch = Math.floor((t - CUSTOM_CYCLE_EPOCH) / 86400000);
+  return Math.floor(daysSinceEpoch / Math.max(1, days));
+}
+function weekStartISO(dateISO) {
+  const [y, m, d] = dateISO.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const day = dt.getUTCDay();
+  const diffToMonday = (day === 0 ? -6 : 1) - day;
+  dt.setUTCDate(dt.getUTCDate() + diffToMonday);
+  return dt.toISOString().slice(0, 10);
+}
+// A stable string identifying which "instance" of a period a date falls in,
+// e.g. two dates in the same calendar month share the same monthly key.
+// Used to detect when a category's period has closed so leftover budget can roll over.
+function periodKeyFor(dateISO, periodType, customDays) {
+  if (periodType === 'daily') return dateISO;
+  if (periodType === 'weekly') return weekStartISO(dateISO);
+  if (periodType === 'yearly') return dateISO.slice(0, 4);
+  if (periodType === 'custom') return 'c' + customCycleBucket(dateISO, customDays || 7);
+  return dateISO.slice(0, 7); // monthly
 }
 
 class Component {
@@ -1259,6 +1354,7 @@ class Component {
       newCategoryBudget: '',
       newCategoryEmoji: '',
       newCategoryPeriod: 'monthly',
+      newCategoryCustomDays: '7',
       addingNewCategory: false,
       editingEmojiFor: null,
       editingTx: false,
@@ -1281,6 +1377,7 @@ class Component {
       importError: null,
     };
     this.checkAndApplyRecurring();
+    this.checkAndApplyRollovers();
     this.persist(); // lock in the one-time category migration flag (and any recurring bills applied just now)
   }
 
@@ -1399,6 +1496,105 @@ class Component {
     }
   }
 
+  // Runs once when the app opens: for every budgeted category, checks whether
+  // its period has closed since we last looked. If it has and the category
+  // was underspent, it queues a decision for the person to resolve (add the
+  // leftover to the current budget, or save it straight to a wallet) rather
+  // than applying either outcome automatically.
+  checkAndApplyRollovers() {
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const lastKeys = { ...this.state.budgetLastPeriodKey };
+    const pending = [...this.state.pendingRolloverDecisions];
+    let changed = false;
+
+    Object.keys(this.state.budgets).forEach(name => {
+      const budget = parseFloat(this.state.budgets[name]) || 0;
+      const period = this.state.budgetPeriods[name] || 'monthly';
+      const customDays = parseInt(this.state.budgetCustomDays[name], 10) || 7;
+      const currentKey = periodKeyFor(todayISO, period, customDays);
+      const lastKey = lastKeys[name];
+
+      if (lastKey === undefined) {
+        lastKeys[name] = currentKey;
+        changed = true;
+        return;
+      }
+      if (lastKey === currentKey) return; // still the same period, nothing closed out yet
+
+      if (budget > 0) {
+        let spentInLastPeriod = 0;
+        this.state.transactions.forEach(t => {
+          if (t.type === 'income' || t.category !== name) return;
+          if (periodKeyFor(t.dateISO, period, customDays) === lastKey) spentInLastPeriod += t.amount;
+        });
+        const leftover = budget - spentInLastPeriod;
+        if (leftover > 0) {
+          pending.push({ id: name + ':' + lastKey, category: name, amount: leftover });
+        }
+      }
+      lastKeys[name] = currentKey;
+      changed = true;
+    });
+
+    if (changed) {
+      this.state = { ...this.state, budgetLastPeriodKey: lastKeys, pendingRolloverDecisions: pending };
+    }
+  }
+
+  rolloverAddToBudget = (id) => this.setState(s => {
+    const d = s.pendingRolloverDecisions.find(x => x.id === id);
+    if (!d) return {};
+    const historyEntry = { id: Date.now(), category: d.category, amount: d.amount, destination: 'Budget', dateISO: new Date().toISOString().slice(0, 10) };
+    return {
+      budgetRollovers: { ...s.budgetRollovers, [d.category]: (s.budgetRollovers[d.category] || 0) + d.amount },
+      pendingRolloverDecisions: s.pendingRolloverDecisions.filter(x => x.id !== id),
+      rolloverHistory: [historyEntry, ...s.rolloverHistory],
+    };
+  });
+  rolloverSaveToWallet = (id) => this.setState(s => {
+    const d = s.pendingRolloverDecisions.find(x => x.id === id);
+    if (!d) return {};
+    const walletId = s.activeWalletId;
+    const walletName = (s.wallets.find(w => w.id === walletId) || {}).name || 'wallet';
+    const wallets = s.wallets.map(w => w.id === walletId ? { ...w, balance: (parseFloat(w.balance) || 0) + d.amount } : w);
+    const tx = {
+      id: Date.now(), name: `${d.category} budget savings`, category: 'Income', type: 'income',
+      walletId, amount: d.amount, dateISO: new Date().toISOString().slice(0, 10), photo: null, isBudgetRollover: true,
+    };
+    const historyEntry = { id: Date.now() + 1, category: d.category, amount: d.amount, destination: walletName, dateISO: new Date().toISOString().slice(0, 10) };
+    return {
+      wallets, transactions: [tx, ...s.transactions],
+      pendingRolloverDecisions: s.pendingRolloverDecisions.filter(x => x.id !== id),
+      rolloverHistory: [historyEntry, ...s.rolloverHistory],
+    };
+  });
+  rolloverAddToGoal = (id, goalId) => this.setState(s => {
+    const d = s.pendingRolloverDecisions.find(x => x.id === id);
+    const goal = s.savingsGoals.find(g => g.id === goalId);
+    if (!d || !goal) return {};
+    const savingsGoals = s.savingsGoals.map(g => g.id === goalId ? { ...g, saved: (parseFloat(g.saved) || 0) + d.amount } : g);
+    const historyEntry = { id: Date.now(), category: d.category, amount: d.amount, destination: `"${goal.name}" goal`, dateISO: new Date().toISOString().slice(0, 10) };
+    return {
+      savingsGoals,
+      pendingRolloverDecisions: s.pendingRolloverDecisions.filter(x => x.id !== id),
+      rolloverHistory: [historyEntry, ...s.rolloverHistory],
+    };
+  });
+
+  saveCategoryRolloverToWallet = (name) => {
+    const amount = this.state.budgetRollovers[name] || 0;
+    if (amount <= 0) return;
+    this.setState(s => {
+      const walletId = s.activeWalletId;
+      const wallets = s.wallets.map(w => w.id === walletId ? { ...w, balance: (parseFloat(w.balance) || 0) + amount } : w);
+      const tx = {
+        id: Date.now(), name: `${name} budget savings`, category: 'Income', type: 'income',
+        walletId, amount, dateISO: new Date().toISOString().slice(0, 10), photo: null, isBudgetRollover: true,
+      };
+      return { wallets, transactions: [tx, ...s.transactions], budgetRollovers: { ...s.budgetRollovers, [name]: 0 } };
+    });
+  };
+
   // === Receivables (money owed to you) ===
   onUserNameChange = (e) => this.setState({ userName: e.target.value });
 
@@ -1513,15 +1709,17 @@ class Component {
     if (!name) { this.setState({ addingNewCategory: false }); return; }
     const emoji = this.state.newCategoryEmoji || '📦';
     const period = this.state.newCategoryPeriod || 'monthly';
+    const customDays = Math.max(1, parseInt(this.state.newCategoryCustomDays, 10) || 7);
     if (this.state.budgets[name] === undefined) {
       this.setState(s => ({
         budgets: { ...s.budgets, [name]: 0 },
         categoryEmojis: { ...s.categoryEmojis, [name]: emoji },
         budgetPeriods: { ...s.budgetPeriods, [name]: period },
-        formCategory: name, addingNewCategory: false, newCategoryName: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly',
+        budgetCustomDays: { ...s.budgetCustomDays, [name]: customDays },
+        formCategory: name, addingNewCategory: false, newCategoryName: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly', newCategoryCustomDays: '7',
       }));
     } else {
-      this.setState({ formCategory: name, addingNewCategory: false, newCategoryName: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly' });
+      this.setState({ formCategory: name, addingNewCategory: false, newCategoryName: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly', newCategoryCustomDays: '7' });
     }
   };
   cancelNewCategoryInline = () => this.setState({ addingNewCategory: false, newCategoryName: '' });
@@ -1584,6 +1782,7 @@ class Component {
   onNewCategoryNameChange = (e) => this.setState({ newCategoryName: e.target.value });
   onNewCategoryBudgetChange = (e) => this.setState({ newCategoryBudget: e.target.value });
   onNewCategoryPeriodChange = (e) => this.setState({ newCategoryPeriod: e.target.value });
+  onNewCategoryCustomDaysChange = (e) => this.setState({ newCategoryCustomDays: e.target.value });
   pickNewCategoryEmoji = (emoji) => this.setState({ newCategoryEmoji: emoji });
   onNewCategoryEmojiChange = (e) => this.setState({ newCategoryEmoji: e.target.value });
   addCategory = () => {
@@ -1592,11 +1791,13 @@ class Component {
     const budget = parseFloat(this.state.newCategoryBudget) || 0;
     const emoji = this.state.newCategoryEmoji || '📦';
     const period = this.state.newCategoryPeriod || 'monthly';
+    const customDays = Math.max(1, parseInt(this.state.newCategoryCustomDays, 10) || 7);
     this.setState(s => ({
       budgets: { ...s.budgets, [name]: budget },
       categoryEmojis: { ...s.categoryEmojis, [name]: emoji },
       budgetPeriods: { ...s.budgetPeriods, [name]: period },
-      newCategoryName: '', newCategoryBudget: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly',
+      budgetCustomDays: { ...s.budgetCustomDays, [name]: customDays },
+      newCategoryName: '', newCategoryBudget: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly', newCategoryCustomDays: '7',
     }));
   };
   showRecentTab = () => this.setState({ homeInfoTab: 'recent' });
@@ -1604,6 +1805,15 @@ class Component {
 
   startEditEmoji = (name) => this.setState({ editingEmojiFor: this.state.editingEmojiFor === name ? null : name });
   setCategoryPeriod = (name, period) => this.setState(s => ({ budgetPeriods: { ...s.budgetPeriods, [name]: period } }));
+  setCustomDays = (name, days) => {
+    if (days === '') {
+      this.setState(s => ({ budgetCustomDays: { ...s.budgetCustomDays, [name]: '' } }));
+      return;
+    }
+    const n = parseInt(days, 10);
+    if (isNaN(n) || n < 1) return;
+    this.setState(s => ({ budgetCustomDays: { ...s.budgetCustomDays, [name]: n } }));
+  };
   pickEmojiFor = (name, emoji) => this.setState(s => ({ categoryEmojis: { ...s.categoryEmojis, [name]: emoji }, editingEmojiFor: null }));
   onCategoryEmojiTextChange = (name, e) => {
     const val = e.target.value;
@@ -1618,7 +1828,13 @@ class Component {
     delete categoryEmojis[name];
     const budgetPeriods = { ...s.budgetPeriods };
     delete budgetPeriods[name];
-    return { budgets, categoryEmojis, budgetPeriods };
+    const budgetCustomDays = { ...s.budgetCustomDays };
+    delete budgetCustomDays[name];
+    const budgetRollovers = { ...s.budgetRollovers };
+    delete budgetRollovers[name];
+    const budgetLastPeriodKey = { ...s.budgetLastPeriodKey };
+    delete budgetLastPeriodKey[name];
+    return { budgets, categoryEmojis, budgetPeriods, budgetCustomDays, budgetRollovers, budgetLastPeriodKey };
   });
   removeCategory = (name) => this.confirmDelete('category', name, name);
   onCategoryNameChange = (oldName, e) => {
@@ -1634,8 +1850,14 @@ class Component {
       Object.keys(s.categoryEmojis).forEach(k => { categoryEmojis[k === oldName ? newName : k] = s.categoryEmojis[k]; });
       const budgetPeriods = {};
       Object.keys(s.budgetPeriods).forEach(k => { budgetPeriods[k === oldName ? newName : k] = s.budgetPeriods[k]; });
+      const budgetCustomDays = {};
+      Object.keys(s.budgetCustomDays).forEach(k => { budgetCustomDays[k === oldName ? newName : k] = s.budgetCustomDays[k]; });
+      const budgetRollovers = {};
+      Object.keys(s.budgetRollovers).forEach(k => { budgetRollovers[k === oldName ? newName : k] = s.budgetRollovers[k]; });
+      const budgetLastPeriodKey = {};
+      Object.keys(s.budgetLastPeriodKey).forEach(k => { budgetLastPeriodKey[k === oldName ? newName : k] = s.budgetLastPeriodKey[k]; });
       const transactions = s.transactions.map(t => t.category === oldName ? { ...t, category: newName } : t);
-      return { budgets, categoryEmojis, budgetPeriods, transactions };
+      return { budgets, categoryEmojis, budgetPeriods, budgetCustomDays, budgetRollovers, budgetLastPeriodKey, transactions };
     });
   };
 
@@ -1877,6 +2099,10 @@ class Component {
       if (period === 'daily') inScope = t.dateISO === spendTodayISO;
       else if (period === 'weekly') inScope = t.dateISO >= spendWeekBounds.startISO && t.dateISO <= spendWeekBounds.endISO;
       else if (period === 'yearly') inScope = t.dateISO.slice(0, 4) === spendCurrentYearKey;
+      else if (period === 'custom') {
+        const days = parseInt(this.state.budgetCustomDays[t.category], 10) || 7;
+        inScope = customCycleBucket(t.dateISO, days) === customCycleBucket(spendTodayISO, days);
+      }
       else inScope = t.dateISO.slice(0, 7) === spendCurrentMonthKey;
       if (inScope) spendByCategory[t.category] = (spendByCategory[t.category] || 0) + t.amount;
     });
@@ -1885,14 +2111,22 @@ class Component {
       const spent = spendByCategory[name] || 0;
       const budget = budgets[name];
       const budgetNum = parseFloat(budget) || 0;
+      const rollover = this.state.budgetRollovers[name] || 0;
+      const effectiveBudget = budgetNum + rollover;
       const period = this.state.budgetPeriods[name] || 'monthly';
-      const pct = budget > 0 ? Math.min(100, (spent / budget) * 100) : 0;
+      const customDays = parseInt(this.state.budgetCustomDays[name], 10) || 7;
+      const customDaysRaw = this.state.budgetCustomDays[name] !== undefined ? this.state.budgetCustomDays[name] : 7;
+      const pct = effectiveBudget > 0 ? Math.min(100, (spent / effectiveBudget) * 100) : 0;
       return {
-        name, spent, budget, period,
-        periodLabel: { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' }[period] || 'Monthly',
+        name, spent, budget, period, customDays, customDaysRaw,
+        rollover, rolloverLabel: rollover.toFixed(2), hasRollover: rollover > 0,
+        saveRollover: () => this.saveCategoryRolloverToWallet(name),
+        periodLabel: period === 'custom' ? `Every ${customDays}d` : ({ daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' }[period] || 'Monthly'),
+        isCustomPeriod: period === 'custom',
         onPeriodChange: (e) => this.setCategoryPeriod(name, e.target.value),
+        onCustomDaysChange: (e) => this.setCustomDays(name, e.target.value),
         spentLabel: spent.toFixed(2),
-        budgetLabel: budgetNum.toFixed(2),
+        budgetLabel: effectiveBudget.toFixed(2),
         pctLabel: pct.toFixed(0) + '%',
         barColor: this.barColorFor(pct),
         iconPath: CATEGORY_ICONS[name] || CATEGORY_ICONS.Other,
@@ -2099,6 +2333,9 @@ class Component {
       newCategoryBudget: this.state.newCategoryBudget,
       newCategoryPeriod: this.state.newCategoryPeriod,
       onNewCategoryPeriodChange: this.onNewCategoryPeriodChange,
+      newCategoryCustomDays: this.state.newCategoryCustomDays,
+      onNewCategoryCustomDaysChange: this.onNewCategoryCustomDaysChange,
+      isNewCategoryCustom: this.state.newCategoryPeriod === 'custom',
       newCategoryEmoji: this.state.newCategoryEmoji || '📦',
       onNewCategoryNameChange: this.onNewCategoryNameChange,
       onNewCategoryBudgetChange: this.onNewCategoryBudgetChange,
@@ -2184,6 +2421,23 @@ class Component {
       onEditTxWalletChange: this.onEditTxWalletChange,
       onEditTxCategoryChange: this.onEditTxCategoryChange,
       pendingDelete: this.state.pendingDelete,
+      pendingRolloverDecision: this.state.pendingRolloverDecisions[0] ? {
+        ...this.state.pendingRolloverDecisions[0],
+        amountLabel: this.state.pendingRolloverDecisions[0].amount.toFixed(2),
+        addToBudget: () => this.rolloverAddToBudget(this.state.pendingRolloverDecisions[0].id),
+        saveToWallet: () => this.rolloverSaveToWallet(this.state.pendingRolloverDecisions[0].id),
+        goalOptions: this.state.savingsGoals.map(g => ({
+          id: g.id, name: g.name,
+          apply: () => this.rolloverAddToGoal(this.state.pendingRolloverDecisions[0].id, g.id),
+        })),
+        hasGoals: this.state.savingsGoals.length > 0,
+      } : null,
+      pendingRolloverCount: this.state.pendingRolloverDecisions.length,
+      hasMoreRollovers: this.state.pendingRolloverDecisions.length > 1,
+      rolloverHistory: this.state.rolloverHistory.slice(0, 15).map(h => ({
+        ...h, amountLabel: h.amount.toFixed(2),
+      })),
+      hasRolloverHistory: this.state.rolloverHistory.length > 0,
       cancelPendingDelete: this.cancelPendingDelete,
       executePendingDelete: this.executePendingDelete,
     };
