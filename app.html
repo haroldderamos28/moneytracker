@@ -457,7 +457,12 @@
                     <div style="height: 4px; background: var(--color-neutral-200);"><div style="height: 100%; width: {{ cat.pctLabel }}; background: {{ cat.barColor }};"></div></div>
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
                       <div style="font-size: 11px; color: var(--color-neutral-600);">₱{{ cat.spentLabel }} spent</div>
-                      <button type="button" sc-camel-on-click="{{ cat.togglePeriod }}" style="font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--color-divider); background: var(--color-neutral-100); color: var(--color-neutral-700); cursor: pointer;">{{ cat.periodLabel }} ↻</button>
+                      <sc-raw-select value="{{ cat.period }}" sc-camel-on-change="{{ cat.onPeriodChange }}" style="font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 999px; border: 1px solid var(--color-divider); background: var(--color-neutral-100); color: var(--color-neutral-700); cursor: pointer;">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                      </sc-raw-select>
                     </div>
                   </div>
                 </sc-for>
@@ -469,8 +474,17 @@
                   <input class="input" type="text" placeholder="e.g. Subscriptions" value="{{ newCategoryName }}" sc-camel-on-change="{{ onNewCategoryNameChange }}">
                 </div>
                 <div class="field">
-                  <label>Monthly budget</label>
+                  <label>Budget amount</label>
                   <input class="input" type="number" placeholder="0.00" value="{{ newCategoryBudget }}" sc-camel-on-change="{{ onNewCategoryBudgetChange }}">
+                </div>
+                <div class="field">
+                  <label>Resets</label>
+                  <sc-raw-select class="input" value="{{ newCategoryPeriod }}" sc-camel-on-change="{{ onNewCategoryPeriodChange }}">
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                  </sc-raw-select>
                 </div>
                 <div class="field">
                   <label>Emoji</label>
@@ -726,6 +740,15 @@
                       <sc-for list="{{ emojiPalette }}" as="e" hint-placeholder-count="20">
                         <button type="button" sc-camel-on-click="{{ e.pick }}" style="width: 30px; height: 30px; font-size: 15px; background: var(--color-neutral-100); border: 1px solid var(--color-divider); cursor: pointer; display: flex; align-items: center; justify-content: center; {{ e.highlight }}">{{ e.emoji }}</button>
                       </sc-for>
+                    </div>
+                    <div class="field" style="margin-bottom: var(--space-2);">
+                      <label>Resets</label>
+                      <sc-raw-select class="input" value="{{ newCategoryPeriod }}" sc-camel-on-change="{{ onNewCategoryPeriodChange }}">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                      </sc-raw-select>
                     </div>
                     <div style="display: flex; gap: var(--space-2);">
                       <button class="btn btn-primary" style="flex: 1; height: 40px;" sc-camel-on-click="{{ confirmNewCategoryInline }}">Add</button>
@@ -1202,6 +1225,16 @@ function formatMonthLabel(iso) {
   const d = new Date(iso + 'T00:00:00');
   return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
+function getWeekBounds(d) {
+  const day = d.getDay(); // 0=Sun..6=Sat
+  const diffToMonday = (day === 0 ? -6 : 1) - day;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diffToMonday);
+  monday.setHours(0, 0, 0, 0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  return { startISO: monday.toISOString().slice(0, 10), endISO: sunday.toISOString().slice(0, 10) };
+}
 
 class Component {
   constructor(renderFn) {
@@ -1225,6 +1258,7 @@ class Component {
       newCategoryName: '',
       newCategoryBudget: '',
       newCategoryEmoji: '',
+      newCategoryPeriod: 'monthly',
       addingNewCategory: false,
       editingEmojiFor: null,
       editingTx: false,
@@ -1478,14 +1512,16 @@ class Component {
     const name = this.state.newCategoryName.trim();
     if (!name) { this.setState({ addingNewCategory: false }); return; }
     const emoji = this.state.newCategoryEmoji || '📦';
+    const period = this.state.newCategoryPeriod || 'monthly';
     if (this.state.budgets[name] === undefined) {
       this.setState(s => ({
         budgets: { ...s.budgets, [name]: 0 },
         categoryEmojis: { ...s.categoryEmojis, [name]: emoji },
-        formCategory: name, addingNewCategory: false, newCategoryName: '', newCategoryEmoji: '',
+        budgetPeriods: { ...s.budgetPeriods, [name]: period },
+        formCategory: name, addingNewCategory: false, newCategoryName: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly',
       }));
     } else {
-      this.setState({ formCategory: name, addingNewCategory: false, newCategoryName: '', newCategoryEmoji: '' });
+      this.setState({ formCategory: name, addingNewCategory: false, newCategoryName: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly' });
     }
   };
   cancelNewCategoryInline = () => this.setState({ addingNewCategory: false, newCategoryName: '' });
@@ -1547,6 +1583,7 @@ class Component {
 
   onNewCategoryNameChange = (e) => this.setState({ newCategoryName: e.target.value });
   onNewCategoryBudgetChange = (e) => this.setState({ newCategoryBudget: e.target.value });
+  onNewCategoryPeriodChange = (e) => this.setState({ newCategoryPeriod: e.target.value });
   pickNewCategoryEmoji = (emoji) => this.setState({ newCategoryEmoji: emoji });
   onNewCategoryEmojiChange = (e) => this.setState({ newCategoryEmoji: e.target.value });
   addCategory = () => {
@@ -1554,10 +1591,12 @@ class Component {
     if (!name || this.state.budgets[name] !== undefined) return;
     const budget = parseFloat(this.state.newCategoryBudget) || 0;
     const emoji = this.state.newCategoryEmoji || '📦';
+    const period = this.state.newCategoryPeriod || 'monthly';
     this.setState(s => ({
       budgets: { ...s.budgets, [name]: budget },
       categoryEmojis: { ...s.categoryEmojis, [name]: emoji },
-      newCategoryName: '', newCategoryBudget: '', newCategoryEmoji: '',
+      budgetPeriods: { ...s.budgetPeriods, [name]: period },
+      newCategoryName: '', newCategoryBudget: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly',
     }));
   };
   showRecentTab = () => this.setState({ homeInfoTab: 'recent' });
@@ -1827,12 +1866,18 @@ class Component {
     const categoryNames = Object.keys(budgets);
     const spendTodayISO = new Date().toISOString().slice(0, 10);
     const spendCurrentMonthKey = spendTodayISO.slice(0, 7);
+    const spendCurrentYearKey = spendTodayISO.slice(0, 4);
+    const spendWeekBounds = getWeekBounds(new Date());
     const spendByCategory = {};
     categoryNames.forEach(c => spendByCategory[c] = 0);
     transactions.forEach(t => {
       if (t.type === 'income') return;
       const period = this.state.budgetPeriods[t.category] || 'monthly';
-      const inScope = period === 'daily' ? t.dateISO === spendTodayISO : t.dateISO.slice(0, 7) === spendCurrentMonthKey;
+      let inScope;
+      if (period === 'daily') inScope = t.dateISO === spendTodayISO;
+      else if (period === 'weekly') inScope = t.dateISO >= spendWeekBounds.startISO && t.dateISO <= spendWeekBounds.endISO;
+      else if (period === 'yearly') inScope = t.dateISO.slice(0, 4) === spendCurrentYearKey;
+      else inScope = t.dateISO.slice(0, 7) === spendCurrentMonthKey;
       if (inScope) spendByCategory[t.category] = (spendByCategory[t.category] || 0) + t.amount;
     });
 
@@ -1844,8 +1889,8 @@ class Component {
       const pct = budget > 0 ? Math.min(100, (spent / budget) * 100) : 0;
       return {
         name, spent, budget, period,
-        periodLabel: period === 'daily' ? 'Daily' : 'Monthly',
-        togglePeriod: () => this.setCategoryPeriod(name, period === 'daily' ? 'monthly' : 'daily'),
+        periodLabel: { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' }[period] || 'Monthly',
+        onPeriodChange: (e) => this.setCategoryPeriod(name, e.target.value),
         spentLabel: spent.toFixed(2),
         budgetLabel: budgetNum.toFixed(2),
         pctLabel: pct.toFixed(0) + '%',
@@ -2052,6 +2097,8 @@ class Component {
       addSavingsGoal: this.addSavingsGoal,
       newCategoryName: this.state.newCategoryName,
       newCategoryBudget: this.state.newCategoryBudget,
+      newCategoryPeriod: this.state.newCategoryPeriod,
+      onNewCategoryPeriodChange: this.onNewCategoryPeriodChange,
       newCategoryEmoji: this.state.newCategoryEmoji || '📦',
       onNewCategoryNameChange: this.onNewCategoryNameChange,
       onNewCategoryBudgetChange: this.onNewCategoryBudgetChange,
