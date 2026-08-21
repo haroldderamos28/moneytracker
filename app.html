@@ -152,6 +152,7 @@
                           <div class="card elev-sm" style="padding: var(--space-3); gap: var(--space-2);">
                             <div style="width: 32px; height: 32px; background: #c0c0c0; display: flex; align-items: center; justify-content: center; font-size: 17px;">{{ cat.emoji }}</div>
                             <div style="font-size: 13px; font-weight: 600; font-family: var(--font-heading);">{{ cat.name }}</div>
+                            <div style="font-size: 9px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--color-neutral-500);">{{ cat.periodLabel }}</div>
                             <div style="font-size: 16px; font-weight: 600;">₱{{ cat.spentLabel }} <span style="font-size: 11px; font-weight: 400; color: var(--color-neutral-600);">of ₱{{ cat.budgetLabel }}</span></div>
                             <div style="height: 3px; background: var(--color-neutral-200);"><div style="height: 100%; width: {{ cat.pctLabel }}; background: {{ cat.barColor }};"></div></div>
                           </div>
@@ -454,7 +455,10 @@
                       </div>
                     </sc-if>
                     <div style="height: 4px; background: var(--color-neutral-200);"><div style="height: 100%; width: {{ cat.pctLabel }}; background: {{ cat.barColor }};"></div></div>
-                    <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: 4px;">₱{{ cat.spentLabel }} spent</div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
+                      <div style="font-size: 11px; color: var(--color-neutral-600);">₱{{ cat.spentLabel }} spent</div>
+                      <button type="button" sc-camel-on-click="{{ cat.togglePeriod }}" style="font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--color-divider); background: var(--color-neutral-100); color: var(--color-neutral-700); cursor: pointer;">{{ cat.periodLabel }} ↻</button>
+                    </div>
                   </div>
                 </sc-for>
               </div>
@@ -1145,6 +1149,7 @@ const DEFAULT_STATE = {
     Subscriptions: 150, 'Personal Care': 150, Travel: 300, Gifts: 100, Pets: 150,
   },
   categoryEmojis: { ...CATEGORY_EMOJIS_DEFAULT },
+  budgetPeriods: {},
   transactions: [
     { id: 1, name: 'Shell Gas Station', category: 'Gas', type: 'expense', walletId: 'cash', amount: 42.10, dateISO: '2026-08-15', photo: null },
     { id: 2, name: 'Zara', category: 'Clothing', type: 'expense', walletId: 'cash', amount: 89.99, dateISO: '2026-08-14', photo: null },
@@ -1183,7 +1188,7 @@ function loadPersisted() {
     return { ...DEFAULT_STATE, ...parsed, budgets, categoryEmojis, _categoriesMigratedV2: true };
   } catch (e) { return DEFAULT_STATE; }
 }
-const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'budgets', 'categoryEmojis', 'transactions', 'notificationsOn', 'savingsGoals', 'homeInfoTab', 'recurringBills', 'receivables', 'userName', 'notifiedThisMonth', '_categoriesMigratedV2'];
+const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'budgets', 'budgetPeriods', 'categoryEmojis', 'transactions', 'notificationsOn', 'savingsGoals', 'homeInfoTab', 'recurringBills', 'receivables', 'userName', 'notifiedThisMonth', '_categoriesMigratedV2'];
 
 function formatDateLabel(iso) {
   const d = new Date(iso + 'T00:00:00');
@@ -1559,6 +1564,7 @@ class Component {
   showCategoriesTab = () => this.setState({ homeInfoTab: 'categories' });
 
   startEditEmoji = (name) => this.setState({ editingEmojiFor: this.state.editingEmojiFor === name ? null : name });
+  setCategoryPeriod = (name, period) => this.setState(s => ({ budgetPeriods: { ...s.budgetPeriods, [name]: period } }));
   pickEmojiFor = (name, emoji) => this.setState(s => ({ categoryEmojis: { ...s.categoryEmojis, [name]: emoji }, editingEmojiFor: null }));
   onCategoryEmojiTextChange = (name, e) => {
     const val = e.target.value;
@@ -1571,7 +1577,9 @@ class Component {
     delete budgets[name];
     const categoryEmojis = { ...s.categoryEmojis };
     delete categoryEmojis[name];
-    return { budgets, categoryEmojis };
+    const budgetPeriods = { ...s.budgetPeriods };
+    delete budgetPeriods[name];
+    return { budgets, categoryEmojis, budgetPeriods };
   });
   removeCategory = (name) => this.confirmDelete('category', name, name);
   onCategoryNameChange = (oldName, e) => {
@@ -1585,8 +1593,10 @@ class Component {
       Object.keys(s.budgets).forEach(k => { budgets[k === oldName ? newName : k] = s.budgets[k]; });
       const categoryEmojis = {};
       Object.keys(s.categoryEmojis).forEach(k => { categoryEmojis[k === oldName ? newName : k] = s.categoryEmojis[k]; });
+      const budgetPeriods = {};
+      Object.keys(s.budgetPeriods).forEach(k => { budgetPeriods[k === oldName ? newName : k] = s.budgetPeriods[k]; });
       const transactions = s.transactions.map(t => t.category === oldName ? { ...t, category: newName } : t);
-      return { budgets, categoryEmojis, transactions };
+      return { budgets, categoryEmojis, budgetPeriods, transactions };
     });
   };
 
@@ -1815,17 +1825,27 @@ class Component {
     const selectedTx = selectedTxBase ? { ...selectedTxBase, photoDisplay: selectedTxBase.photo ? 'block' : 'none' } : null;
 
     const categoryNames = Object.keys(budgets);
+    const spendTodayISO = new Date().toISOString().slice(0, 10);
+    const spendCurrentMonthKey = spendTodayISO.slice(0, 7);
     const spendByCategory = {};
     categoryNames.forEach(c => spendByCategory[c] = 0);
-    transactions.forEach(t => { if (t.type !== 'income') spendByCategory[t.category] = (spendByCategory[t.category] || 0) + t.amount; });
+    transactions.forEach(t => {
+      if (t.type === 'income') return;
+      const period = this.state.budgetPeriods[t.category] || 'monthly';
+      const inScope = period === 'daily' ? t.dateISO === spendTodayISO : t.dateISO.slice(0, 7) === spendCurrentMonthKey;
+      if (inScope) spendByCategory[t.category] = (spendByCategory[t.category] || 0) + t.amount;
+    });
 
     const categories = categoryNames.map(name => {
       const spent = spendByCategory[name] || 0;
       const budget = budgets[name];
       const budgetNum = parseFloat(budget) || 0;
+      const period = this.state.budgetPeriods[name] || 'monthly';
       const pct = budget > 0 ? Math.min(100, (spent / budget) * 100) : 0;
       return {
-        name, spent, budget,
+        name, spent, budget, period,
+        periodLabel: period === 'daily' ? 'Daily' : 'Monthly',
+        togglePeriod: () => this.setCategoryPeriod(name, period === 'daily' ? 'monthly' : 'daily'),
         spentLabel: spent.toFixed(2),
         budgetLabel: budgetNum.toFixed(2),
         pctLabel: pct.toFixed(0) + '%',
