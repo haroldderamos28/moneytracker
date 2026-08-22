@@ -286,6 +286,18 @@
                   <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: 6px;">Shows up as your greeting on Home.</div>
                 </div>
                 <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2);">Money</div>
+                <div class="card elev-sm" style="padding: var(--space-4); margin-bottom: var(--space-4);">
+                  <div class="field">
+                    <label>Default wallet for new transactions</label>
+                    <sc-raw-select class="input" value="{{ defaultWalletId }}" sc-camel-on-change="{{ onDefaultWalletChange }}">
+                      <option value="">Whichever wallet is active</option>
+                      <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="3">
+                        <option value="{{ w.id }}">{{ w.name }}</option>
+                      </sc-for>
+                    </sc-raw-select>
+                  </div>
+                  <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: 6px;">This wallet is pre-selected whenever you add a new transaction.</div>
+                </div>
                 <div class="card elev-sm" style="padding: 0; gap: 0; margin-bottom: var(--space-4);">
                   <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ openOverlay_wallets }}">
                     <div style="flex: 1; font-size: 14px;">Wallets</div>
@@ -823,7 +835,7 @@
               </sc-if>
 
               <div class="field" style="margin-top: var(--space-3);">
-                <label>Wallet</label>
+                <label>Pay from</label>
                 <sc-raw-select class="input" value="{{ formWalletId }}" sc-camel-on-change="{{ onFormWalletChange }}">
                   <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="3">
                     <option value="{{ w.id }}">{{ w.name }}</option>
@@ -894,7 +906,7 @@
                     <input class="input" type="date" value="{{ editTxDate }}" sc-camel-on-change="{{ onEditTxDateChange }}">
                   </div>
                   <div class="field">
-                    <label>Wallet</label>
+                    <label>Pay from</label>
                     <sc-raw-select class="input" value="{{ editTxWalletId }}" sc-camel-on-change="{{ onEditTxWalletChange }}">
                       <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="3">
                         <option value="{{ w.id }}">{{ w.name }}</option>
@@ -1246,6 +1258,7 @@ const DEFAULT_STATE = {
     { id: 'ewallet', name: 'E-wallet', balance: 500 },
   ],
   activeWalletId: 'cash',
+  defaultWalletId: '',
   budgets: {
     Gas: 300, Clothing: 400, Shopping: 450, Groceries: 450, Dining: 300, Transport: 200,
     Bills: 800, Entertainment: 200, Health: 300, Education: 250, Rent: 4000,
@@ -1296,7 +1309,7 @@ function loadPersisted() {
     return { ...DEFAULT_STATE, ...parsed, budgets, categoryEmojis, _categoriesMigratedV2: true };
   } catch (e) { return DEFAULT_STATE; }
 }
-const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'budgets', 'budgetPeriods', 'budgetCustomDays', 'budgetRollovers', 'budgetLastPeriodKey', 'pendingRolloverDecisions', 'rolloverHistory', 'categoryEmojis', 'transactions', 'notificationsOn', 'savingsGoals', 'homeInfoTab', 'recurringBills', 'receivables', 'userName', 'notifiedThisMonth', '_categoriesMigratedV2'];
+const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'defaultWalletId', 'budgets', 'budgetPeriods', 'budgetCustomDays', 'budgetRollovers', 'budgetLastPeriodKey', 'pendingRolloverDecisions', 'rolloverHistory', 'categoryEmojis', 'transactions', 'notificationsOn', 'savingsGoals', 'homeInfoTab', 'recurringBills', 'receivables', 'userName', 'notifiedThisMonth', '_categoriesMigratedV2'];
 
 function formatDateLabel(iso) {
   const d = new Date(iso + 'T00:00:00');
@@ -1431,11 +1444,17 @@ class Component {
   goSavings = () => this.setState({ tab: 'savings' });
   goSettings = () => this.setState({ tab: 'settings' });
 
-  openOverlay = (name) => this.setState({
-    overlay: name,
-    formWalletId: this.state.activeWalletId,
-    formDate: name === 'add' ? new Date().toISOString().slice(0, 10) : this.state.formDate,
-  });
+  openOverlay = (name) => {
+    const defaultExists = this.state.wallets.some(w => w.id === this.state.defaultWalletId);
+    const fallbackWalletId = (defaultExists && this.state.defaultWalletId) || this.state.activeWalletId;
+    this.setState({
+      overlay: name,
+      formWalletId: name === 'add' ? fallbackWalletId : this.state.activeWalletId,
+      formDate: name === 'add' ? new Date().toISOString().slice(0, 10) : this.state.formDate,
+      addingNewCategory: false,
+      newCategoryName: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly', newCategoryCustomDays: '7',
+    });
+  };
   closeOverlay = () => this.setState({ overlay: null, selectedTxId: null });
 
   switchWallet = (id) => this.setState({ activeWalletId: id });
@@ -1621,6 +1640,7 @@ class Component {
 
   // === Receivables (money owed to you) ===
   onUserNameChange = (e) => this.setState({ userName: e.target.value });
+  onDefaultWalletChange = (e) => this.setState({ defaultWalletId: e.target.value });
 
   onNewReceivableNameChange = (e) => this.setState({ newReceivableName: e.target.value });
   onNewReceivableAmountChange = (e) => this.setState({ newReceivableAmount: e.target.value });
@@ -1709,7 +1729,8 @@ class Component {
     if (s.wallets.length <= 1) return {};
     const wallets = s.wallets.filter(w => w.id !== id);
     const activeWalletId = s.activeWalletId === id ? wallets[0].id : s.activeWalletId;
-    return { wallets, activeWalletId };
+    const defaultWalletId = s.defaultWalletId === id ? '' : s.defaultWalletId;
+    return { wallets, activeWalletId, defaultWalletId };
   });
   removeWallet = (id) => {
     const w = this.state.wallets.find(w => w.id === id);
@@ -2274,6 +2295,8 @@ class Component {
       greeting,
       userName: this.state.userName,
       onUserNameChange: this.onUserNameChange,
+      defaultWalletId: this.state.defaultWalletId,
+      onDefaultWalletChange: this.onDefaultWalletChange,
       receivables: receivablesRender,
       totalReceivableLabel: totalReceivable.toFixed(2),
       totalReceivableRaw: totalReceivable,
