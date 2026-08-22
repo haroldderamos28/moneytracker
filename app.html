@@ -658,7 +658,18 @@
                 <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="3">
                   <div class="card elev-sm" style="padding: var(--space-3); flex-direction: row; align-items: center; gap: var(--space-3);">
                     <div style="flex: 1; font-size: 14px; font-weight: 600; font-family: var(--font-heading);">{{ w.name }}</div>
-                    <div style="display: flex; align-items: baseline; gap: 2px;"><span style="font-size: 13px;">₱</span><input class="input" type="number" value="{{ w.balance }}" sc-camel-on-change="{{ w.onBalanceChange }}" style="width: 80px; padding: 4px 6px; text-align: right;"></div>
+                    <sc-if value="{{ w.isEditingBalance }}" hint-placeholder-val="{{ false }}">
+                      <div style="display: flex; align-items: baseline; gap: 2px;"><span style="font-size: 13px;">₱</span><input class="input" type="number" value="{{ w.balance }}" sc-camel-on-change="{{ w.onBalanceChange }}" style="width: 80px; padding: 4px 6px; text-align: right;"></div>
+                      <button class="btn btn-primary btn-icon" aria-label="Done editing" sc-camel-on-click="{{ w.stopEdit }}" style="flex: none;">
+                        <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"></path></svg>
+                      </button>
+                    </sc-if>
+                    <sc-if value="{{ !w.isEditingBalance }}" hint-placeholder-val="{{ true }}">
+                      <div style="font-size: 14px; font-weight: 600;">₱{{ w.balanceLabel }}</div>
+                      <button class="btn btn-secondary btn-icon" aria-label="Edit balance" sc-camel-on-click="{{ w.startEdit }}" style="flex: none;">
+                        <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
+                      </button>
+                    </sc-if>
                     <button class="btn btn-secondary btn-icon" aria-label="Delete wallet" sc-camel-on-click="{{ w.remove }}" style="flex: none;">
                       <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>
                     </button>
@@ -1357,6 +1368,7 @@ class Component {
       newCategoryCustomDays: '7',
       addingNewCategory: false,
       editingEmojiFor: null,
+      editingWalletId: null,
       editingTx: false,
       editTxName: '',
       editTxAmount: '',
@@ -1692,6 +1704,8 @@ class Component {
     if (this.state.wallets.length <= 1) return;
     this.confirmDelete('wallet', id, w ? w.name : 'this wallet');
   };
+  startEditWallet = (id) => this.setState({ editingWalletId: id });
+  stopEditWallet = () => this.setState({ editingWalletId: null });
 
   onFormNameChange = (e) => this.setState({ formName: e.target.value });
   onFormAmountChange = (e) => this.setState({ formAmount: e.target.value });
@@ -2226,11 +2240,15 @@ class Component {
     const totalSaved = this.state.savingsGoals.reduce((sum, g) => sum + (parseFloat(g.saved) || 0), 0);
     const walletsRender = wallets.map(w => ({
       ...w,
+      balanceLabel: (parseFloat(w.balance) || 0).toFixed(2),
       bg: w.id === activeWalletId ? 'var(--color-accent)' : 'none',
       color: w.id === activeWalletId ? 'var(--color-bg)' : 'var(--color-text)',
       select: () => this.switchWallet(w.id),
       onBalanceChange: (e) => this.onWalletBalanceChangeFor(w.id, e),
       remove: () => this.removeWallet(w.id),
+      isEditingBalance: this.state.editingWalletId === w.id,
+      startEdit: () => this.startEditWallet(w.id),
+      stopEdit: () => this.stopEditWallet(),
     }));
 
     const quickAdds = QUICK_ADDS.map(q => ({ label: `${q.name} · ₱${q.amount}`, apply: () => this.applyQuickAdd(q) }));
