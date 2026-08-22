@@ -465,6 +465,7 @@
                         </sc-if>
                         <sc-raw-select value="{{ cat.period }}" sc-camel-on-change="{{ cat.onPeriodChange }}" style="font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 999px; border: 1px solid var(--color-divider); background: var(--color-neutral-100); color: var(--color-neutral-700); cursor: pointer;">
                           <option value="daily">Daily</option>
+                          <option value="weekday">Weekdays only</option>
                           <option value="weekly">Weekly</option>
                           <option value="monthly">Monthly</option>
                           <option value="yearly">Yearly</option>
@@ -495,6 +496,7 @@
                   <label>Resets</label>
                   <sc-raw-select class="input" value="{{ newCategoryPeriod }}" sc-camel-on-change="{{ onNewCategoryPeriodChange }}">
                     <option value="daily">Daily</option>
+                          <option value="weekday">Weekdays only</option>
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
                     <option value="yearly">Yearly</option>
@@ -791,6 +793,7 @@
                       <label>Resets</label>
                       <sc-raw-select class="input" value="{{ newCategoryPeriod }}" sc-camel-on-change="{{ onNewCategoryPeriodChange }}">
                         <option value="daily">Daily</option>
+                          <option value="weekday">Weekdays only</option>
                         <option value="weekly">Weekly</option>
                         <option value="monthly">Monthly</option>
                         <option value="yearly">Yearly</option>
@@ -1334,8 +1337,17 @@ function weekStartISO(dateISO) {
 // A stable string identifying which "instance" of a period a date falls in,
 // e.g. two dates in the same calendar month share the same monthly key.
 // Used to detect when a category's period has closed so leftover budget can roll over.
+function weekdayPeriodKey(dateISO) {
+  const [y, m, d] = dateISO.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const day = dt.getUTCDay(); // 0=Sun..6=Sat
+  if (day === 0) dt.setUTCDate(dt.getUTCDate() - 2); // Sunday -> preceding Friday
+  else if (day === 6) dt.setUTCDate(dt.getUTCDate() - 1); // Saturday -> preceding Friday
+  return 'wd' + dt.toISOString().slice(0, 10);
+}
 function periodKeyFor(dateISO, periodType, customDays) {
   if (periodType === 'daily') return dateISO;
+  if (periodType === 'weekday') return weekdayPeriodKey(dateISO);
   if (periodType === 'weekly') return weekStartISO(dateISO);
   if (periodType === 'yearly') return dateISO.slice(0, 4);
   if (periodType === 'custom') return 'c' + customCycleBucket(dateISO, customDays || 7);
@@ -2101,23 +2113,13 @@ class Component {
 
     const categoryNames = Object.keys(budgets);
     const spendTodayISO = new Date().toISOString().slice(0, 10);
-    const spendCurrentMonthKey = spendTodayISO.slice(0, 7);
-    const spendCurrentYearKey = spendTodayISO.slice(0, 4);
-    const spendWeekBounds = getWeekBounds(new Date());
     const spendByCategory = {};
     categoryNames.forEach(c => spendByCategory[c] = 0);
     transactions.forEach(t => {
       if (t.type === 'income') return;
       const period = this.state.budgetPeriods[t.category] || 'monthly';
-      let inScope;
-      if (period === 'daily') inScope = t.dateISO === spendTodayISO;
-      else if (period === 'weekly') inScope = t.dateISO >= spendWeekBounds.startISO && t.dateISO <= spendWeekBounds.endISO;
-      else if (period === 'yearly') inScope = t.dateISO.slice(0, 4) === spendCurrentYearKey;
-      else if (period === 'custom') {
-        const days = parseInt(this.state.budgetCustomDays[t.category], 10) || 7;
-        inScope = customCycleBucket(t.dateISO, days) === customCycleBucket(spendTodayISO, days);
-      }
-      else inScope = t.dateISO.slice(0, 7) === spendCurrentMonthKey;
+      const customDays = parseInt(this.state.budgetCustomDays[t.category], 10) || 7;
+      const inScope = periodKeyFor(t.dateISO, period, customDays) === periodKeyFor(spendTodayISO, period, customDays);
       if (inScope) spendByCategory[t.category] = (spendByCategory[t.category] || 0) + t.amount;
     });
 
@@ -2135,7 +2137,7 @@ class Component {
         name, spent, budget, period, customDays, customDaysRaw,
         rollover, rolloverLabel: rollover.toFixed(2), hasRollover: rollover > 0,
         saveRollover: () => this.saveCategoryRolloverToWallet(name),
-        periodLabel: period === 'custom' ? `Every ${customDays}d` : ({ daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' }[period] || 'Monthly'),
+        periodLabel: period === 'custom' ? `Every ${customDays}d` : ({ daily: 'Daily', weekday: 'Weekdays', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' }[period] || 'Monthly'),
         isCustomPeriod: period === 'custom',
         onPeriodChange: (e) => this.setCategoryPeriod(name, e.target.value),
         onCustomDaysChange: (e) => this.setCustomDays(name, e.target.value),
