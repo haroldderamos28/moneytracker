@@ -488,8 +488,15 @@
                     <sc-if value="{{ cat.hasRollover }}" hint-placeholder-val="{{ false }}">
                       <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--color-divider);">
                         <div style="font-size: 11px; color: #2f9e44;">+₱{{ cat.rolloverLabel }} rolled over, added to this budget</div>
-                        <button type="button" sc-camel-on-click="{{ cat.saveRollover }}" style="font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--color-accent); background: none; color: var(--color-accent); cursor: pointer;">Save to wallet</button>
+                        <button type="button" sc-camel-on-click="{{ cat.toggleSaveRolloverPicker }}" style="font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--color-accent); background: none; color: var(--color-accent); cursor: pointer;">Save to wallet</button>
                       </div>
+                      <sc-if value="{{ cat.isSavingRollover }}" hint-placeholder-val="{{ false }}">
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
+                          <sc-for list="{{ cat.rolloverWalletOptions }}" as="w" hint-placeholder-count="3">
+                            <button type="button" sc-camel-on-click="{{ w.apply }}" style="font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--color-divider); background: var(--color-neutral-100); color: var(--color-neutral-700); cursor: pointer;">{{ w.name }}</button>
+                          </sc-for>
+                        </div>
+                      </sc-if>
                     </sc-if>
                   </div>
                 </sc-for>
@@ -949,10 +956,15 @@
             <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 999; padding: 24px; box-sizing: border-box;">
               <div class="card elev-sm" style="padding: var(--space-5); max-width: 320px; width: 100%; gap: var(--space-3); background: var(--color-surface); max-height: 80vh; overflow-y: auto;">
                 <div style="font-size: 16px; font-weight: 700; font-family: var(--font-heading);">{{ pendingRolloverDecision.category }} had ₱{{ pendingRolloverDecision.amountLabel }} left over</div>
-                <div style="font-size: 13px; color: var(--color-neutral-600);">Add it to this period's budget, save it to your active wallet, or put it toward a goal?</div>
+                <div style="font-size: 13px; color: var(--color-neutral-600);">Add it to this period's budget, save it to a wallet, or put it toward a goal?</div>
                 <div style="display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2);">
                   <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ pendingRolloverDecision.addToBudget }}">Add to budget</button>
-                  <button class="btn btn-secondary btn-block" style="height: 44px;" sc-camel-on-click="{{ pendingRolloverDecision.saveToWallet }}">Save to wallet</button>
+                </div>
+                <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-neutral-600); margin-top: var(--space-2);">Or save to a wallet</div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <sc-for list="{{ pendingRolloverDecision.walletOptions }}" as="w" hint-placeholder-count="3">
+                    <button class="btn btn-secondary btn-block" style="height: 40px; font-size: 13px;" sc-camel-on-click="{{ w.apply }}">{{ w.name }}</button>
+                  </sc-for>
                 </div>
                 <sc-if value="{{ pendingRolloverDecision.hasGoals }}" hint-placeholder-val="{{ false }}">
                   <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-neutral-600); margin-top: var(--space-2);">Or put toward a goal</div>
@@ -1394,6 +1406,7 @@ class Component {
       addingNewCategory: false,
       editingEmojiFor: null,
       editingWalletId: null,
+      savingRolloverFor: null,
       editingTx: false,
       editTxName: '',
       editTxAmount: '',
@@ -1594,15 +1607,15 @@ class Component {
       rolloverHistory: [historyEntry, ...s.rolloverHistory],
     };
   });
-  rolloverSaveToWallet = (id) => this.setState(s => {
+  rolloverSaveToWallet = (id, walletId) => this.setState(s => {
     const d = s.pendingRolloverDecisions.find(x => x.id === id);
     if (!d) return {};
-    const walletId = s.activeWalletId;
-    const walletName = (s.wallets.find(w => w.id === walletId) || {}).name || 'wallet';
-    const wallets = s.wallets.map(w => w.id === walletId ? { ...w, balance: (parseFloat(w.balance) || 0) + d.amount } : w);
+    const targetWalletId = walletId || s.activeWalletId;
+    const walletName = (s.wallets.find(w => w.id === targetWalletId) || {}).name || 'wallet';
+    const wallets = s.wallets.map(w => w.id === targetWalletId ? { ...w, balance: (parseFloat(w.balance) || 0) + d.amount } : w);
     const tx = {
       id: Date.now(), name: `${d.category} budget savings`, category: 'Income', type: 'income',
-      walletId, amount: d.amount, dateISO: new Date().toISOString().slice(0, 10), photo: null, isBudgetRollover: true,
+      walletId: targetWalletId, amount: d.amount, dateISO: new Date().toISOString().slice(0, 10), photo: null, isBudgetRollover: true,
     };
     const historyEntry = { id: Date.now() + 1, category: d.category, amount: d.amount, destination: walletName, dateISO: new Date().toISOString().slice(0, 10) };
     return {
@@ -1624,17 +1637,25 @@ class Component {
     };
   });
 
-  saveCategoryRolloverToWallet = (name) => {
+  toggleSaveRolloverPicker = (name) => this.setState({ savingRolloverFor: this.state.savingRolloverFor === name ? null : name });
+  saveCategoryRolloverToWallet = (name, walletId) => {
     const amount = this.state.budgetRollovers[name] || 0;
     if (amount <= 0) return;
     this.setState(s => {
-      const walletId = s.activeWalletId;
-      const wallets = s.wallets.map(w => w.id === walletId ? { ...w, balance: (parseFloat(w.balance) || 0) + amount } : w);
+      const targetWalletId = walletId || s.activeWalletId;
+      const walletName = (s.wallets.find(w => w.id === targetWalletId) || {}).name || 'wallet';
+      const wallets = s.wallets.map(w => w.id === targetWalletId ? { ...w, balance: (parseFloat(w.balance) || 0) + amount } : w);
       const tx = {
         id: Date.now(), name: `${name} budget savings`, category: 'Income', type: 'income',
-        walletId, amount, dateISO: new Date().toISOString().slice(0, 10), photo: null, isBudgetRollover: true,
+        walletId: targetWalletId, amount, dateISO: new Date().toISOString().slice(0, 10), photo: null, isBudgetRollover: true,
       };
-      return { wallets, transactions: [tx, ...s.transactions], budgetRollovers: { ...s.budgetRollovers, [name]: 0 } };
+      const historyEntry = { id: Date.now() + 1, category: name, amount, destination: walletName, dateISO: new Date().toISOString().slice(0, 10) };
+      return {
+        wallets, transactions: [tx, ...s.transactions],
+        budgetRollovers: { ...s.budgetRollovers, [name]: 0 },
+        rolloverHistory: [historyEntry, ...s.rolloverHistory],
+        savingRolloverFor: null,
+      };
     });
   };
 
@@ -2157,7 +2178,9 @@ class Component {
       return {
         name, spent, budget, period, customDays, customDaysRaw,
         rollover, rolloverLabel: rollover.toFixed(2), hasRollover: rollover > 0,
-        saveRollover: () => this.saveCategoryRolloverToWallet(name),
+        isSavingRollover: this.state.savingRolloverFor === name,
+        toggleSaveRolloverPicker: () => this.toggleSaveRolloverPicker(name),
+        rolloverWalletOptions: wallets.map(w => ({ id: w.id, name: w.name, apply: () => this.saveCategoryRolloverToWallet(name, w.id) })),
         periodLabel: period === 'custom' ? `Every ${customDays}d` : ({ daily: 'Daily', weekday: 'Weekdays', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' }[period] || 'Monthly'),
         isCustomPeriod: period === 'custom',
         onPeriodChange: (e) => this.setCategoryPeriod(name, e.target.value),
@@ -2468,7 +2491,10 @@ class Component {
         ...this.state.pendingRolloverDecisions[0],
         amountLabel: this.state.pendingRolloverDecisions[0].amount.toFixed(2),
         addToBudget: () => this.rolloverAddToBudget(this.state.pendingRolloverDecisions[0].id),
-        saveToWallet: () => this.rolloverSaveToWallet(this.state.pendingRolloverDecisions[0].id),
+        walletOptions: this.state.wallets.map(w => ({
+          id: w.id, name: w.name,
+          apply: () => this.rolloverSaveToWallet(this.state.pendingRolloverDecisions[0].id, w.id),
+        })),
         goalOptions: this.state.savingsGoals.map(g => ({
           id: g.id, name: g.name,
           apply: () => this.rolloverAddToGoal(this.state.pendingRolloverDecisions[0].id, g.id),
