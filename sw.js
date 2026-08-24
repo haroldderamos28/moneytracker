@@ -1,39 +1,2774 @@
-const CACHE_VERSION = 'v4'; // bump this every deploy
-const CACHE_NAME = `financial-freedom-${CACHE_VERSION}`;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>financial_freedom_inprogress</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#1f7a6e">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="./styles.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--color-bg); font-family: var(--font-body); }
+  #app-root { position: relative; min-height: 100vh; overflow-x: hidden; background: var(--color-bg); color: var(--color-text); }
+</style>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+  }
+</script>
+</head>
+<body>
+<div id="app-root"></div>
+<template id="app-template">
 
-self.addEventListener('install', (event) => {
-  self.skipWaiting(); // don't wait for old tabs to close
-});
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key)) // nuke old caches
-      )
-    ).then(() => self.clients.claim()) // take control of open pages now
-  );
-});
+      <sc-if value="{{ showOnboarding }}" hint-placeholder-val="{{ true }}">
+        <div style="padding: 48px 24px 32px; box-sizing: border-box; height: 100%; display: flex; flex-direction: column; align-items: center;">
+          <div style="width: 100%; height: 380px; background: #c0c0c0; display: flex; align-items: center; justify-content: center; overflow: hidden; flex: none;">
+            <img src="./onboarding.png" alt="Phoenix" style="width: 100%; height: 100%; object-fit: contain;">
+          </div>
+          <div style="padding-top: var(--space-4); box-sizing: border-box; display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-6); width: 100%;">
+          <div>
+            <div style="font: 600 11px var(--font-heading); letter-spacing: .12em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 8px;">Welcome</div>
+            <h1 style="margin: 0 0 var(--space-3); font-size: 30px;">Track every peso you spend.</h1>
+            <p style="margin: 0; font-size: 14px; color: var(--color-neutral-700); max-width: 280px;">Categorize expenses, set budgets and watch your savings goals — all in one place.</p>
+          </div>
+          <button class="btn btn-primary btn-block" style="height: 48px; font-size: 15px;" sc-camel-on-click="{{ finishOnboarding }}">Get started</button>
+          <div style="font-family: var(--font-heading); font-weight: 800; font-size: 17px; letter-spacing: .06em; text-align: center; width: 100%; color: var(--color-accent-700); text-transform: uppercase;">Your financial freedom starts here</div>
+          </div>
+        </div>
+      </sc-if>
 
-// Stale-while-revalidate: show the cached version instantly (no waiting on
-// the network, so the app opens right away instead of freezing on the
-// launch icon), while fetching a fresh copy in the background to update the
-// cache for the *next* launch. First-ever load (nothing cached yet) still
-// waits on the network, same as before.
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.open(CACHE_NAME).then((cache) =>
-      cache.match(event.request).then((cachedResponse) => {
-        const fetchPromise = fetch(event.request)
-          .then((networkResponse) => {
-            cache.put(event.request, networkResponse.clone());
-            return networkResponse;
-          })
-          .catch(() => cachedResponse);
-        return cachedResponse || fetchPromise;
-      })
-    )
-  );
-});
+      <sc-if value="{{ !showOnboarding }}" hint-placeholder-val="{{ false }}">
+        <div style="height: 100%; display: flex; flex-direction: column;">
+
+          <div style="flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;">
+
+            <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+              <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4);">
+                  <div>
+                    <div style="font: 600 11px var(--font-heading); letter-spacing: .12em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 4px;">Overview</div>
+                    <h2 style="margin: 0; font-size: 26px;">{{ greeting }}</h2>
+                  </div>
+                  <button class="btn btn-secondary btn-icon" aria-label="Notifications" sc-camel-on-click="{{ openOverlay_notifications }}" style="position: relative;">
+                    <svg width="18" height="18" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    <span style="position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; background: #c0392b; border-radius: 50%;"></span>
+                  </button>
+                </div>
+
+                <div style="display: flex; gap: 6px; overflow-x: auto; margin-bottom: var(--space-3); padding-bottom: 2px;">
+                  <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="3">
+                    <button style="flex: none; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--color-divider); background: {{ w.bg }}; color: {{ w.color }}; font-size: 12px; font-weight: 600; cursor: pointer;" sc-camel-on-click="{{ w.select }}">{{ w.name }}</button>
+                  </sc-for>
+                  <button style="flex: none; padding: 6px 12px; border-radius: 999px; border: 1px dashed var(--color-divider); background: none; color: var(--color-neutral-600); font-size: 12px; font-weight: 600; cursor: pointer;" sc-camel-on-click="{{ openOverlay_wallets }}">Manage</button>
+                </div>
+
+                <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-2); margin-bottom: var(--space-3); background: var(--color-accent-100);">
+                  <div class="card-kicker">Total balance</div>
+                  <div style="display: flex; align-items: baseline; gap: 2px;">
+                    <span style="font-family: var(--font-heading); font-weight: 700; font-size: 26px; color: var(--color-accent-800);">₱</span>
+                    <span style="font-family: var(--font-heading); font-weight: 700; font-size: 26px; color: var(--color-accent-800);">{{ totalBalanceLabel }}</span>
+                  </div>
+                  <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: 2px;">Across {{ wallets.length }} sources</div>
+                </div>
+
+                <sc-if value="{{ totalReceivableRaw }}" hint-placeholder-val="{{ false }}">
+                  <div class="card elev-sm" style="padding: var(--space-3) var(--space-4); gap: 2px; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: var(--space-3); cursor: pointer;" sc-camel-on-click="{{ openOverlay_receivables }}">
+                    <div>
+                      <div class="card-kicker">Owed to you</div>
+                      <div style="font-family: var(--font-heading); font-weight: 700; font-size: 18px;">₱{{ totalReceivableLabel }}</div>
+                    </div>
+                    <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
+                  </div>
+                </sc-if>
+
+                <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-2); flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: var(--space-3);">
+                  <div>
+                    <div class="card-kicker">{{ activeWalletName }} balance</div>
+                    <div style="display: flex; align-items: baseline; gap: 2px;">
+                      <span style="font-family: var(--font-heading); font-weight: 700; font-size: 22px;">₱</span>
+                      <input class="input" type="number" step="0.01" value="{{ activeWalletBalance }}" sc-camel-on-change="{{ onWalletBalanceChange }}" style="border: none; padding: 0; font-family: var(--font-heading); font-weight: 700; font-size: 22px; width: 110px; background: transparent;">
+                    </div>
+                  </div>
+                  <div style="font-size: 11px; color: var(--color-neutral-600); text-align: right; max-width: 120px;">Every transaction is applied automatically.</div>
+                </div>
+
+                <div class="card elev-sm" style="padding: var(--space-6) var(--space-4); gap: var(--space-3);">
+                  <div class="card-kicker">Spent this month</div>
+                  <div style="display: flex; align-items: baseline; gap: 10px;">
+                    <div style="font-family: var(--font-heading); font-weight: 600; font-size: 40px; line-height: 1;">₱{{ totalSpentLabel }}</div>
+                  </div>
+                  <div style="display: flex; align-items: flex-end; gap: 7px; height: 56px; margin-top: var(--space-2);">
+                    <div style="flex:1; height: 42%; background: var(--color-accent-300);"></div>
+                    <div style="flex:1; height: 58%; background: var(--color-accent-300);"></div>
+                    <div style="flex:1; height: 30%; background: var(--color-accent-300);"></div>
+                    <div style="flex:1; height: 71%; background: var(--color-accent-300);"></div>
+                    <div style="flex:1; height: 50%; background: var(--color-accent-300);"></div>
+                    <div style="flex:1; height: 65%; background: var(--color-accent-300);"></div>
+                    <div style="flex:1; height: 90%; background: var(--color-accent);"></div>
+                  </div>
+                </div>
+
+                <div class="card elev-sm" style="padding: 0; overflow: hidden; margin-top: var(--space-6);">
+                  <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider);">
+                    <div style="display: flex; gap: var(--space-4);">
+                      <button type="button" style="background: none; border: none; padding: 0; font: 600 14px var(--font-heading); cursor: pointer; color: {{ recentTabColor }};" sc-camel-on-click="{{ showRecentTab }}">Recent</button>
+                      <button type="button" style="background: none; border: none; padding: 0; font: 600 14px var(--font-heading); cursor: pointer; color: {{ categoriesTabColor }};" sc-camel-on-click="{{ showCategoriesTab }}">Categories</button>
+                    </div>
+                    <sc-if value="{{ isRecentTab }}" hint-placeholder-val="{{ true }}">
+                      <a class="btn btn-ghost" style="padding: 0; font-size: 12px; cursor: pointer;" sc-camel-on-click="{{ openOverlay_search }}">Search</a>
+                    </sc-if>
+                    <sc-if value="{{ isCategoriesTab }}" hint-placeholder-val="{{ false }}">
+                      <a class="btn btn-ghost" style="padding: 0; font-size: 12px; cursor: pointer;" sc-camel-on-click="{{ openOverlay_budgets }}">Budgets</a>
+                    </sc-if>
+                  </div>
+
+                  <sc-if value="{{ isRecentTab }}" hint-placeholder-val="{{ true }}">
+                    <div>
+                      <sc-for list="{{ recentPreview }}" as="t" hint-placeholder-count="5">
+                        <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ t.select }}">
+                          <div style="width: 30px; height: 30px; flex: none; background: #c0c0c0; display: flex; align-items: center; justify-content: center; color: var(--color-accent); overflow: hidden; background-image: {{ t.bgImage }}; background-size: cover; background-position: center;">
+                            <span style="font-size: 15px; {{ t.iconDisplay }}">{{ t.emoji }}</span>
+                          </div>
+                          <div style="flex: 1;">
+                            <div style="font-size: 14px; font-weight: 500;">{{ t.name }}</div>
+                            <div style="font-size: 11px; color: var(--color-neutral-600);">{{ t.category }} · {{ t.dateLabel }}</div>
+                          </div>
+                          <div style="font-size: 14px; font-weight: 600; color: {{ t.amountColor }};">{{ t.signedAmountLabel }}</div>
+                        </div>
+                      </sc-for>
+                      <sc-if value="{{ hasMoreThanPreview }}" hint-placeholder-val="{{ false }}">
+                        <div style="padding: var(--space-3) var(--space-4); text-align: center; cursor: pointer;" sc-camel-on-click="{{ openOverlay_history }}">
+                          <span style="font-size: 13px; font-weight: 600; color: var(--color-accent);">See full history</span>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </sc-if>
+
+                  <sc-if value="{{ isCategoriesTab }}" hint-placeholder-val="{{ false }}">
+                    <sc-if value="{{ activeCategories.length }}" hint-placeholder-val="{{ true }}">
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); padding: var(--space-4);">
+                        <sc-for list="{{ activeCategories }}" as="cat" hint-placeholder-count="6">
+                          <div class="card elev-sm" style="padding: var(--space-3); gap: var(--space-2);">
+                            <div style="width: 32px; height: 32px; background: #c0c0c0; display: flex; align-items: center; justify-content: center; font-size: 17px;">{{ cat.emoji }}</div>
+                            <div style="font-size: 13px; font-weight: 600; font-family: var(--font-heading);">{{ cat.name }}</div>
+                            <div style="font-size: 9px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--color-neutral-500);">{{ cat.periodLabel }}</div>
+                            <div style="font-size: 16px; font-weight: 600;">₱{{ cat.spentLabel }} <span style="font-size: 11px; font-weight: 400; color: var(--color-neutral-600);">of ₱{{ cat.budgetLabel }}</span></div>
+                            <div style="height: 3px; background: var(--color-neutral-200);"><div style="height: 100%; width: {{ cat.pctLabel }}; background: {{ cat.barColor }};"></div></div>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ !activeCategories.length }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding: var(--space-6) var(--space-4); text-align: center; color: var(--color-neutral-600); font-size: 13px;">No categorized spending yet — add a transaction to see it here.</div>
+                    </sc-if>
+                  </sc-if>
+                </div>
+
+                <button class="btn btn-primary btn-block" style="margin-top: var(--space-6); height: 48px; font-size: 15px; gap: 8px;" sc-camel-on-click="{{ openOverlay_add }}">
+                  <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>
+                  Add transaction
+                </button>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isAnalytics }}" hint-placeholder-val="{{ false }}">
+              <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+                <div style="margin-bottom: var(--space-6);">
+                  <div style="font: 600 11px var(--font-heading); letter-spacing: .12em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 4px;">Insights</div>
+                  <h2 style="margin: 0; font-size: 26px;">Analytics</h2>
+                </div>
+                <div class="card elev-sm" style="padding: var(--space-4);">
+                  <div class="card-kicker">Categorized spend</div>
+                  <div style="font-family: var(--font-heading); font-weight: 800; font-size: 32px; line-height: 1;">₱{{ totalSpentLabel }}</div>
+                  <div style="font-size: 12px; color: var(--color-neutral-600); margin-top: 2px;">{{ activeCategoryCount }} categories</div>
+                </div>
+                <div class="card elev-sm" style="padding: var(--space-4); margin-top: var(--space-3); flex-direction: row; align-items: center; justify-content: space-between;">
+                  <div>
+                    <div class="card-kicker">This month vs last</div>
+                    <div style="font-size: 13px; color: var(--color-neutral-600); margin-top: 2px;">₱{{ thisMonthSpendLabel }} vs ₱{{ lastMonthSpendLabel }}</div>
+                  </div>
+                  <div style="font-family: var(--font-heading); font-weight: 800; font-size: 20px; color: {{ monthChangeColor }};">{{ monthChangeLabel }}</div>
+                </div>
+                <div style="display: flex; height: 14px; width: 100%; margin-top: var(--space-4); overflow: hidden;">
+                  <sc-for list="{{ analyticsBars }}" as="b" hint-placeholder-count="6">
+                    <div style="flex: {{ b.pct }}; background: {{ b.color }};"></div>
+                  </sc-for>
+                </div>
+                <div style="display: flex; flex-direction: column; margin-top: var(--space-3);">
+                  <sc-for list="{{ analyticsRows }}" as="row" hint-placeholder-count="6">
+                    <div style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-divider);">
+                      <div style="width: 10px; height: 10px; background: {{ row.color }}; flex: none;"></div>
+                      <div style="flex: 1; font-size: 14px;">{{ row.name }}</div>
+                      <div style="font-size: 14px; font-weight: 600;">₱{{ row.spentLabel }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ topCategory }}" hint-placeholder-val="{{ false }}">
+                  <div class="card elev-sm" style="padding: var(--space-4); margin-top: var(--space-4); flex-direction: row; align-items: center; gap: var(--space-3); background: var(--color-accent-100);">
+                    <svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.6" style="flex: none;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                    <div style="font-size: 13px; color: var(--color-accent-800);">{{ topCategory.name }} is your biggest category this month — {{ topCategory.pctLabel }}% of tracked spend.</div>
+                  </div>
+                </sc-if>
+
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin: var(--space-6) 0 var(--space-3);">
+                  <h4 style="margin: 0;">History</h4>
+                  <a class="btn btn-ghost" style="padding: 0; font-size: 12px; cursor: pointer;" sc-camel-on-click="{{ openOverlay_history }}">See all</a>
+                </div>
+                <div class="card elev-sm" style="padding: 0; gap: 0;">
+                  <sc-for list="{{ monthlyHistoryPreview }}" as="m" hint-placeholder-count="3">
+                    <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider);">
+                      <div style="flex: 1; font-size: 14px;">{{ m.label }}</div>
+                      <div style="font-size: 14px; font-weight: 600;">₱{{ m.totalLabel }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isSavings }}" hint-placeholder-val="{{ false }}">
+              <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+                <div style="margin-bottom: var(--space-6);">
+                  <div style="font: 600 11px var(--font-heading); letter-spacing: .12em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 4px;">Goals</div>
+                  <h2 style="margin: 0; font-size: 26px;">Savings</h2>
+                </div>
+                <div class="card elev-sm" style="padding: var(--space-4);">
+                  <div class="card-kicker">Total saved toward goals</div>
+                  <div style="display: flex; align-items: baseline; gap: 10px;">
+                    <div style="font-family: var(--font-heading); font-weight: 800; font-size: 32px; line-height: 1;">₱{{ totalSavedLabel }}</div>
+                  </div>
+                </div>
+                <div style="margin: var(--space-6) 0 var(--space-3);"><h4 style="margin: 0;">Goals</h4></div>
+                <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                  <sc-for list="{{ savingsGoals }}" as="g" hint-placeholder-count="3">
+                    <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-2);">
+                      <div style="display: flex; align-items: center; gap: var(--space-2);">
+                        <div class="card-title" style="font-size: 15px; flex: 1;">{{ g.name }}</div>
+                        <button class="btn btn-secondary btn-icon" aria-label="Delete goal" sc-camel-on-click="{{ g.remove }}" style="flex: none; width: 28px; height: 28px;">
+                          <svg width="12" height="12" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>
+                        </button>
+                      </div>
+                      <div style="height: 6px; background: var(--color-neutral-200); margin-top: 2px;"><div style="height: 100%; width: {{ g.pctLabel }}; background: {{ g.barColor }};"></div></div>
+                      <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--color-neutral-600); margin-top: 4px; gap: 8px;">
+                        <div style="display: flex; align-items: baseline; gap: 3px;">
+                          <span>₱</span><input class="input" type="number" value="{{ g.saved }}" sc-camel-on-change="{{ g.onSavedChange }}" style="width: 58px; padding: 2px 4px; font-size: 12px;">
+                          <span>of ₱</span><input class="input" type="number" value="{{ g.target }}" sc-camel-on-change="{{ g.onTargetChange }}" style="width: 58px; padding: 2px 4px; font-size: 12px;">
+                        </div>
+                        <span style="flex: none; font-weight: 600;">{{ g.pctLabel }}</span>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-3); margin-top: var(--space-3);">
+                  <div class="card-title" style="font-size: 14px;">Add a goal</div>
+                  <div class="field">
+                    <label>Name</label>
+                    <input class="input" type="text" placeholder="e.g. New phone" value="{{ newGoalName }}" sc-camel-on-change="{{ onNewGoalNameChange }}">
+                  </div>
+                  <div class="field">
+                    <label>Target amount</label>
+                    <input class="input" type="number" placeholder="0.00" value="{{ newGoalTarget }}" sc-camel-on-change="{{ onNewGoalTargetChange }}">
+                  </div>
+                  <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ addSavingsGoal }}">Add goal</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+              <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+                <h2 style="margin: 0 0 var(--space-4); font-size: 26px;">Settings</h2>
+                <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2);">Profile</div>
+                <div class="card elev-sm" style="padding: var(--space-4); margin-bottom: var(--space-4);">
+                  <div class="field">
+                    <label>Your name</label>
+                    <input class="input" type="text" placeholder="e.g. Harold" value="{{ userName }}" sc-camel-on-change="{{ onUserNameChange }}">
+                  </div>
+                  <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: 6px;">Shows up as your greeting on Home.</div>
+                </div>
+                <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2);">Money</div>
+                <div class="card elev-sm" style="padding: var(--space-4); margin-bottom: var(--space-4);">
+                  <div class="field">
+                    <label>Default wallet for new transactions</label>
+                    <sc-raw-select class="input" value="{{ defaultWalletId }}" sc-camel-on-change="{{ onDefaultWalletChange }}">
+                      <option value="">Whichever wallet is active</option>
+                      <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="3">
+                        <option value="{{ w.id }}">{{ w.name }}</option>
+                      </sc-for>
+                    </sc-raw-select>
+                  </div>
+                  <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: 6px;">This wallet is pre-selected whenever you add a new transaction.</div>
+                </div>
+                <div class="card elev-sm" style="padding: 0; gap: 0; margin-bottom: var(--space-4);">
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ openOverlay_wallets }}">
+                    <div style="flex: 1; font-size: 14px;">Wallets</div>
+                    <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
+                  </div>
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ openOverlay_budgets }}">
+                    <div style="flex: 1; font-size: 14px;">Budgets</div>
+                    <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
+                  </div>
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ openOverlay_recurring }}">
+                    <div style="flex: 1; font-size: 14px;">Recurring</div>
+                    <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
+                  </div>
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ openOverlay_receivables }}">
+                    <div style="flex: 1; font-size: 14px;">Receivables</div>
+                    <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
+                  </div>
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); cursor: pointer;" sc-camel-on-click="{{ openOverlay_history }}">
+                    <div style="flex: 1; font-size: 14px;">History</div>
+                    <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
+                  </div>
+                </div>
+                <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2);">Preferences</div>
+                <div class="card elev-sm" style="padding: 0; gap: 0; margin-bottom: var(--space-4);">
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider);">
+                    <div style="flex: 1; font-size: 14px;">Currency</div>
+                    <div style="font-size: 13px; color: var(--color-neutral-600);">PHP (₱)</div>
+                  </div>
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ toggleDarkMode }}">
+                    <div style="flex: 1; font-size: 14px;">Dark mode</div>
+                    <div style="width: 36px; height: 20px; background: {{ darkToggleBg }}; border-radius: 10px; position: relative; flex: none;">
+                      <div style="width: 16px; height: 16px; background: var(--color-bg); border-radius: 50%; position: absolute; top: 2px; {{ darkToggleSide }}: 2px;"></div>
+                    </div>
+                  </div>
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ toggleNotifications }}">
+                    <div style="flex: 1; font-size: 14px;">Notifications</div>
+                    <div style="width: 36px; height: 20px; background: {{ notifToggleBg }}; border-radius: 10px; position: relative; flex: none;">
+                      <div style="width: 16px; height: 16px; background: var(--color-bg); border-radius: 50%; position: absolute; top: 2px; {{ notifToggleSide }}: 2px;"></div>
+                    </div>
+                  </div>
+                </div>
+                <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2);">Data</div>
+                <div class="card elev-sm" style="padding: 0; gap: 0; margin-bottom: var(--space-4);">
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); cursor: pointer;" sc-camel-on-click="{{ exportCSV }}">
+                    <div style="flex: 1; font-size: 14px;">Export transactions (CSV)</div>
+                    <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  </div>
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); cursor: pointer; border-top: 1px solid var(--color-divider);" sc-camel-on-click="{{ exportBackup }}">
+                    <div style="flex: 1; font-size: 14px;">Export full backup (JSON)</div>
+                    <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  </div>
+                  <label style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); cursor: pointer; border-top: 1px solid var(--color-divider);">
+                    <div style="flex: 1; font-size: 14px;">Import backup</div>
+                    <input type="file" accept="application/json" sc-camel-on-change="{{ onImportBackupFile }}" style="display: none;">
+                    <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.8"><path d="M21 9v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  </label>
+                </div>
+                <sc-if value="{{ importError }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size: 12px; color: #c0392b; margin-bottom: var(--space-4);">{{ importError }}</div>
+                </sc-if>
+                <button class="btn btn-block" style="height: 44px; color: #c0392b; border: 1px solid #c0392b; justify-content: center;">Sign out</button>
+              </div>
+            </sc-if>
+
+          </div>
+
+          <div style="display: flex; border-top: 1px solid var(--color-divider); background: var(--color-bg); padding: 8px 4px calc(env(safe-area-inset-bottom, 8px) + 8px);">
+            <button style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; padding: 4px; cursor: pointer; color: {{ tabHomeColor }};" sc-camel-on-click="{{ goHome }}">
+              <svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"></path></svg>
+              <span style="font-size: 10px; font-weight: 600;">Home</span>
+            </button>
+            <button style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; padding: 4px; cursor: pointer; color: {{ tabAnalyticsColor }};" sc-camel-on-click="{{ goAnalytics }}">
+              <svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"></path><path d="M18 17V9M13 17V5M8 17v-5"></path></svg>
+              <span style="font-size: 10px; font-weight: 600;">Analytics</span>
+            </button>
+            <button style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; padding: 4px; cursor: pointer; color: {{ tabSavingsColor }};" sc-camel-on-click="{{ goSavings }}">
+              <svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+              <span style="font-size: 10px; font-weight: 600;">Savings</span>
+            </button>
+            <button style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; padding: 4px; cursor: pointer; color: {{ tabSettingsColor }};" sc-camel-on-click="{{ goSettings }}">
+              <svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              <span style="font-size: 10px; font-weight: 600;">Settings</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="position: absolute; inset: 0; background: var(--color-bg); transform: translateX({{ overlayX }}); transition: transform .3s ease; overflow-y: auto;">
+
+          <sc-if value="{{ overlayIsNotifications }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" sc-camel-on-click="{{ closeOverlay }}">
+                  <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px;">Notifications</h2>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <sc-for list="{{ budgetAlerts }}" as="a" hint-placeholder-count="2">
+                  <div class="card elev-sm" style="padding: var(--space-3); flex-direction: row; align-items: flex-start; gap: var(--space-3); border-left: 3px solid {{ a.color }};">
+                    <div style="flex: 1;">
+                      <div style="font-size: 13px; font-weight: 600;">{{ a.title }}</div>
+                      <div style="font-size: 12px; color: var(--color-neutral-600); margin-top: 2px;">{{ a.detail }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+                <div class="card elev-sm" style="padding: var(--space-3); flex-direction: row; align-items: flex-start; gap: var(--space-3); border-left: 3px solid var(--color-accent);">
+                  <div style="flex: 1;">
+                    <div style="font-size: 13px; font-weight: 600;">Rent charges in 3 days</div>
+                    <div style="font-size: 12px; color: var(--color-neutral-600); margin-top: 2px;">₱850.00 from your linked account. 1d ago</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ overlayIsSearch }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" sc-camel-on-click="{{ closeOverlay }}">
+                  <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px;">Transactions</h2>
+              </div>
+              <div style="position: relative; margin-bottom: var(--space-3);">
+                <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.8" style="position: absolute; left: 10px; top: 10px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input class="input" type="text" placeholder="Search transactions" value="{{ searchQuery }}" sc-camel-on-change="{{ onSearchChange }}" style="padding-left: 34px;">
+              </div>
+              <div class="card elev-sm" style="padding: 0; gap: 0;">
+                <sc-for list="{{ filteredTransactions }}" as="t" hint-placeholder-count="3">
+                  <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ t.select }}">
+                    <div style="flex: 1;">
+                      <div style="font-size: 14px; font-weight: 500;">{{ t.name }}</div>
+                      <div style="font-size: 11px; color: var(--color-neutral-600);">{{ t.category }} · {{ t.dateLabel }}</div>
+                    </div>
+                    <div style="font-size: 14px; font-weight: 600; color: {{ t.amountColor }};">{{ t.signedAmountLabel }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ overlayIsBudgets }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" sc-camel-on-click="{{ closeOverlay }}">
+                  <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px;">Budgets</h2>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="6">
+                  <div class="card elev-sm" style="padding: var(--space-3);">
+                    <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);">
+                      <button type="button" aria-label="Change emoji" sc-camel-on-click="{{ cat.startEditEmoji }}" style="width: 26px; height: 26px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 15px; background: none; border: none; cursor: pointer; padding: 0;">{{ cat.emoji }}</button>
+                      <input class="input" type="text" value="{{ cat.name }}" sc-camel-on-change="{{ cat.onNameChange }}" style="flex: 1; font-size: 14px; font-weight: 600; font-family: var(--font-heading); padding: 4px 6px;">
+                      <div style="display: flex; align-items: baseline; gap: 2px;"><span style="font-size: 13px;">₱</span><input class="input" type="number" value="{{ cat.budget }}" sc-camel-on-change="{{ cat.onBudgetChange }}" style="width: 64px; padding: 4px 6px; text-align: right;"></div>
+                      <button class="btn btn-secondary btn-icon" aria-label="Delete category" sc-camel-on-click="{{ cat.remove }}" style="flex: none; width: 28px; height: 28px;">
+                        <svg width="12" height="12" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>
+                      </button>
+                    </div>
+                    <sc-if value="{{ cat.isEditingEmoji }}" hint-placeholder-val="{{ false }}">
+                      <div style="display: flex; flex-wrap: wrap; gap: 6px; padding: var(--space-2) 0; border-top: 1px solid var(--color-divider); margin-top: var(--space-1);">
+                        <input class="input" type="text" placeholder="Or type/paste any emoji" sc-camel-on-change="{{ cat.onEmojiTextChange }}" style="width: 100%; margin-bottom: 4px;">
+                        <sc-for list="{{ cat.emojiOptions }}" as="e" hint-placeholder-count="20">
+                          <button type="button" sc-camel-on-click="{{ e.pick }}" style="width: 28px; height: 28px; font-size: 14px; background: var(--color-neutral-100); border: 1px solid var(--color-divider); cursor: pointer; display: flex; align-items: center; justify-content: center; {{ e.highlight }}">{{ e.emoji }}</button>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <div style="height: 4px; background: var(--color-neutral-200);"><div style="height: 100%; width: {{ cat.pctLabel }}; background: {{ cat.barColor }};"></div></div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px; gap: 6px;">
+                      <div style="font-size: 11px; color: var(--color-neutral-600); flex: none;">₱{{ cat.spentLabel }} spent</div>
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <sc-if value="{{ cat.isCustomPeriod }}" hint-placeholder-val="{{ false }}">
+                          <span style="font-size: 10px; color: var(--color-neutral-600);">every</span>
+                          <input type="number" min="1" value="{{ cat.customDaysRaw }}" sc-camel-on-change="{{ cat.onCustomDaysChange }}" style="width: 34px; font-size: 10px; padding: 2px 4px; border: 1px solid var(--color-divider); background: var(--color-neutral-100);">
+                          <span style="font-size: 10px; color: var(--color-neutral-600);">days</span>
+                        </sc-if>
+                        <sc-raw-select value="{{ cat.period }}" sc-camel-on-change="{{ cat.onPeriodChange }}" style="font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 999px; border: 1px solid var(--color-divider); background: var(--color-neutral-100); color: var(--color-neutral-700); cursor: pointer;">
+                          <option value="daily">Daily</option>
+                          <option value="weekday">Weekdays only</option>
+                          <option value="weekly">Weekly</option>
+                          <option value="monthly">Monthly</option>
+                          <option value="yearly">Yearly</option>
+                          <option value="custom">Custom</option>
+                        </sc-raw-select>
+                      </div>
+                    </div>
+                    <a href="{{ cat.calendarReminderUrl }}" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: var(--color-accent); text-decoration: none; margin-top: 6px;">
+                      <svg width="11" height="11" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                      Add reminder to Google Calendar
+                    </a>
+                    <sc-if value="{{ cat.hasRollover }}" hint-placeholder-val="{{ false }}">
+                      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--color-divider);">
+                        <div style="font-size: 11px; color: #2f9e44;">+₱{{ cat.rolloverLabel }} rolled over, added to this budget</div>
+                        <button type="button" sc-camel-on-click="{{ cat.toggleSaveRolloverPicker }}" style="font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--color-accent); background: none; color: var(--color-accent); cursor: pointer;">Save to wallet</button>
+                      </div>
+                      <sc-if value="{{ cat.isSavingRollover }}" hint-placeholder-val="{{ false }}">
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
+                          <sc-for list="{{ cat.rolloverWalletOptions }}" as="w" hint-placeholder-count="3">
+                            <button type="button" sc-camel-on-click="{{ w.apply }}" style="font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--color-divider); background: var(--color-neutral-100); color: var(--color-neutral-700); cursor: pointer;">{{ w.name }}</button>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+              <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-3); margin-top: var(--space-3);">
+                <div class="card-title" style="font-size: 14px;">Add a category</div>
+                <div class="field">
+                  <label>Name</label>
+                  <input class="input" type="text" placeholder="e.g. Subscriptions" value="{{ newCategoryName }}" sc-camel-on-change="{{ onNewCategoryNameChange }}">
+                </div>
+                <div class="field">
+                  <label>Budget amount</label>
+                  <input class="input" type="number" placeholder="0.00" value="{{ newCategoryBudget }}" sc-camel-on-change="{{ onNewCategoryBudgetChange }}">
+                </div>
+                <div class="field">
+                  <label>Resets</label>
+                  <sc-raw-select class="input" value="{{ newCategoryPeriod }}" sc-camel-on-change="{{ onNewCategoryPeriodChange }}">
+                    <option value="daily">Daily</option>
+                          <option value="weekday">Weekdays only</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                    <option value="custom">Custom</option>
+                  </sc-raw-select>
+                </div>
+                <sc-if value="{{ isNewCategoryCustom }}" hint-placeholder-val="{{ false }}">
+                  <div class="field">
+                    <label>Every how many days</label>
+                    <input class="input" type="number" min="1" placeholder="7" value="{{ newCategoryCustomDays }}" sc-camel-on-change="{{ onNewCategoryCustomDaysChange }}">
+                  </div>
+                </sc-if>
+                <div class="field">
+                  <label>Emoji</label>
+                  <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);">
+                    <div style="width: 40px; height: 40px; flex: none; background: var(--color-neutral-100); display: flex; align-items: center; justify-content: center; font-size: 20px;">{{ newCategoryEmoji }}</div>
+                    <input class="input" type="text" placeholder="Or type/paste any emoji" value="{{ newCategoryEmoji }}" sc-camel-on-change="{{ onNewCategoryEmojiChange }}" style="flex: 1;">
+                  </div>
+                  <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <sc-for list="{{ emojiPalette }}" as="e" hint-placeholder-count="20">
+                      <button type="button" sc-camel-on-click="{{ e.pick }}" style="width: 32px; height: 32px; font-size: 16px; background: var(--color-neutral-100); border: 1px solid var(--color-divider); cursor: pointer; display: flex; align-items: center; justify-content: center; {{ e.highlight }}">{{ e.emoji }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+                <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ addCategory }}">Add category</button>
+              </div>
+              <sc-if value="{{ hasRolloverHistory }}" hint-placeholder-val="{{ false }}">
+                <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin: var(--space-4) 0 var(--space-2);">Rollover history</div>
+                <div class="card elev-sm" style="padding: 0; gap: 0;">
+                  <sc-for list="{{ rolloverHistory }}" as="h" hint-placeholder-count="5">
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider);">
+                      <div>
+                        <div style="font-size: 13px; font-weight: 600;">{{ h.category }} → {{ h.destination }}</div>
+                        <div style="font-size: 11px; color: var(--color-neutral-600);">{{ h.dateISO }}</div>
+                      </div>
+                      <div style="font-size: 13px; font-weight: 700; color: #2f9e44;">₱{{ h.amountLabel }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <button class="btn btn-primary btn-block" style="margin-top: var(--space-4); height: 48px;" sc-camel-on-click="{{ closeOverlay }}">Save budgets</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ overlayIsRecurring }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" sc-camel-on-click="{{ closeOverlay }}">
+                  <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px;">Recurring</h2>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <sc-for list="{{ recurringBills }}" as="b" hint-placeholder-count="3">
+                  <div class="card elev-sm" style="padding: var(--space-3); flex-direction: row; align-items: center; gap: var(--space-3);">
+                    <div style="flex: 1;">
+                      <div style="font-size: 14px; font-weight: 600; font-family: var(--font-heading);">{{ b.name }}</div>
+                      <div style="font-size: 11px; color: var(--color-neutral-600);">₱{{ b.amountLabel }} · charges on day {{ b.dayOfMonth }} · {{ b.walletName }}</div>
+                    </div>
+                    <div style="width: 34px; height: 20px; background: {{ b.toggleBg }}; border-radius: 10px; position: relative; flex: none; cursor: pointer;" sc-camel-on-click="{{ b.toggleActive }}">
+                      <div style="width: 16px; height: 16px; background: var(--color-bg); border-radius: 50%; position: absolute; top: 2px; {{ b.toggleSide }}: 2px;"></div>
+                    </div>
+                    <button class="btn btn-secondary btn-icon" aria-label="Delete recurring bill" sc-camel-on-click="{{ b.remove }}" style="flex: none;">
+                      <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>
+                    </button>
+                  </div>
+                </sc-for>
+              </div>
+              <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-3);">
+                <div class="card-title" style="font-size: 14px;">Add a recurring bill</div>
+                <div class="field">
+                  <label>Name</label>
+                  <input class="input" type="text" placeholder="e.g. Rent" value="{{ newRecurringName }}" sc-camel-on-change="{{ onNewRecurringNameChange }}">
+                </div>
+                <div class="field">
+                  <label>Amount</label>
+                  <input class="input" type="number" placeholder="0.00" value="{{ newRecurringAmount }}" sc-camel-on-change="{{ onNewRecurringAmountChange }}">
+                </div>
+                <div class="field">
+                  <label>Day of month it's charged</label>
+                  <input class="input" type="number" min="1" max="28" placeholder="1" value="{{ newRecurringDay }}" sc-camel-on-change="{{ onNewRecurringDayChange }}">
+                </div>
+                <div class="field">
+                  <label>Category</label>
+                  <sc-raw-select class="input" value="{{ newRecurringCategory }}" sc-camel-on-change="{{ onNewRecurringCategoryChange }}">
+                    <sc-for list="{{ categoryOptions }}" as="opt" hint-placeholder-count="6">
+                      <option value="{{ opt.name }}">{{ opt.emoji }} {{ opt.name }}</option>
+                    </sc-for>
+                  </sc-raw-select>
+                </div>
+                <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ addRecurringBill }}">Add recurring bill</button>
+              </div>
+              <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: var(--space-3); text-align: center;">Bills are added automatically as a transaction the next time you open the app on or after their charge day each month.</div>
+
+              <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin: var(--space-6) 0 var(--space-2);">Daily automatic expenses</div>
+              <sc-if value="{{ hasAutoDailyExpenses }}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-4);">
+                  <sc-for list="{{ autoDailyExpenses }}" as="a" hint-placeholder-count="2">
+                    <div class="card elev-sm" style="padding: var(--space-3); flex-direction: row; align-items: center; gap: var(--space-3);">
+                      <div style="width: 30px; height: 30px; flex: none; background: var(--color-neutral-100); display: flex; align-items: center; justify-content: center; font-size: 15px;">{{ a.emoji }}</div>
+                      <div style="flex: 1;">
+                        <div style="font-size: 14px; font-weight: 600; font-family: var(--font-heading);">{{ a.category }}</div>
+                        <div style="font-size: 11px; color: var(--color-neutral-600);">₱{{ a.amountLabel }} · {{ a.frequencyLabel }} · from {{ a.walletName }} · locked</div>
+                      </div>
+                      <button class="btn btn-secondary btn-icon" aria-label="Delete automatic expense" sc-camel-on-click="{{ a.remove }}" style="flex: none;">
+                        <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>
+                      </button>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-3);">
+                <div class="card-title" style="font-size: 14px;">Add an automatic daily expense</div>
+                <div class="field">
+                  <label>Category</label>
+                  <sc-if value="{{ addingNewCategory }}" hint-placeholder-val="{{ false }}">
+                    <div style="display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2);">
+                      <div style="width: 40px; height: 40px; flex: none; background: var(--color-neutral-100); display: flex; align-items: center; justify-content: center; font-size: 20px;">{{ newCategoryEmoji }}</div>
+                      <input class="input" type="text" placeholder="New category name" value="{{ newCategoryName }}" sc-camel-on-change="{{ onNewCategoryNameChange }}" style="flex: 1;">
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--space-2);">
+                      <sc-for list="{{ emojiPalette }}" as="e" hint-placeholder-count="20">
+                        <button type="button" sc-camel-on-click="{{ e.pick }}" style="width: 30px; height: 30px; font-size: 15px; background: var(--color-neutral-100); border: 1px solid var(--color-divider); cursor: pointer; display: flex; align-items: center; justify-content: center; {{ e.highlight }}">{{ e.emoji }}</button>
+                      </sc-for>
+                    </div>
+                    <div style="display: flex; gap: var(--space-2);">
+                      <button class="btn btn-primary" style="flex: 1; height: 40px;" sc-camel-on-click="{{ confirmNewCategoryInline }}">Add</button>
+                      <button class="btn btn-secondary" style="flex: none; height: 40px; padding: 0 14px;" sc-camel-on-click="{{ cancelNewCategoryInline }}">Cancel</button>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ !addingNewCategory }}" hint-placeholder-val="{{ true }}">
+                    <sc-raw-select class="input" value="{{ newAutoDailyCategory }}" sc-camel-on-change="{{ onNewAutoDailyCategoryChange }}">
+                      <option value="">Choose a category</option>
+                      <sc-for list="{{ categoryOptions }}" as="opt" hint-placeholder-count="6">
+                        <option value="{{ opt.name }}">{{ opt.emoji }} {{ opt.name }}</option>
+                      </sc-for>
+                      <option value="__new__">+ Add new category</option>
+                    </sc-raw-select>
+                  </sc-if>
+                </div>
+                <div class="field">
+                  <label>Amount per occurrence</label>
+                  <input class="input" type="number" placeholder="0.00" value="{{ newAutoDailyAmount }}" sc-camel-on-change="{{ onNewAutoDailyAmountChange }}">
+                </div>
+                <div class="field">
+                  <label>Repeats</label>
+                  <sc-raw-select class="input" value="{{ newAutoDailyFrequency }}" sc-camel-on-change="{{ onNewAutoDailyFrequencyChange }}">
+                    <option value="daily">Every day</option>
+                    <option value="weekday">Weekdays only</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                    <option value="custom">Custom</option>
+                  </sc-raw-select>
+                </div>
+                <sc-if value="{{ isNewAutoDailyCustom }}" hint-placeholder-val="{{ false }}">
+                  <div class="field">
+                    <label>Every how many days</label>
+                    <input class="input" type="number" min="1" placeholder="7" value="{{ newAutoDailyCustomDays }}" sc-camel-on-change="{{ onNewAutoDailyCustomDaysChange }}">
+                  </div>
+                </sc-if>
+                <div class="field">
+                  <label>Pull from</label>
+                  <sc-raw-select class="input" value="{{ newAutoDailyWalletId }}" sc-camel-on-change="{{ onNewAutoDailyWalletChange }}">
+                    <option value="">Choose a wallet</option>
+                    <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="3">
+                      <option value="{{ w.id }}">{{ w.name }}</option>
+                    </sc-for>
+                  </sc-raw-select>
+                </div>
+                <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ addAutoDailyExpense }}">Add automatic expense</button>
+              </div>
+              <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: var(--space-3); text-align: center;">Once added, the amount, category, and wallet can't be edited — only deleted entirely.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ overlayIsReceivables }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" sc-camel-on-click="{{ closeOverlay }}">
+                  <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px;">Receivables</h2>
+              </div>
+              <div class="card elev-sm" style="padding: var(--space-4); margin-bottom: var(--space-4);">
+                <div class="card-kicker">Total owed to you</div>
+                <div style="font-family: var(--font-heading); font-weight: 800; font-size: 30px;">₱{{ totalReceivableLabel }}</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <sc-for list="{{ receivables }}" as="r" hint-placeholder-count="3">
+                  <div class="card elev-sm" style="padding: var(--space-3);">
+                    <div style="display: flex; align-items: center; gap: var(--space-3);">
+                      <div style="flex: 1;">
+                        <div style="font-size: 14px; font-weight: 600; font-family: var(--font-heading); {{ r.nameStrike }}">{{ r.personName }}</div>
+                        <div style="font-size: 11px; color: var(--color-neutral-600);">{{ r.note }}</div>
+                      </div>
+                      <div style="font-size: 15px; font-weight: 700; {{ r.nameStrike }}">₱{{ r.amountLabel }}</div>
+                      <button class="btn btn-secondary btn-icon" aria-label="Delete receivable" sc-camel-on-click="{{ r.remove }}" style="flex: none;">
+                        <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>
+                      </button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); cursor: pointer;" sc-camel-on-click="{{ r.toggleSettled }}">
+                      <div style="width: 34px; height: 20px; background: {{ r.toggleBg }}; border-radius: 10px; position: relative; flex: none;">
+                        <div style="width: 16px; height: 16px; background: var(--color-bg); border-radius: 50%; position: absolute; top: 2px; {{ r.toggleSide }}: 2px;"></div>
+                      </div>
+                      <div style="font-size: 12px; color: var(--color-neutral-600);">{{ r.settledLabel }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-3);">
+                <div class="card-title" style="font-size: 14px;">Add someone who owes you</div>
+                <div class="field">
+                  <label>Name</label>
+                  <input class="input" type="text" placeholder="e.g. Ana" value="{{ newReceivableName }}" sc-camel-on-change="{{ onNewReceivableNameChange }}">
+                </div>
+                <div class="field">
+                  <label>Amount</label>
+                  <input class="input" type="number" placeholder="0.00" value="{{ newReceivableAmount }}" sc-camel-on-change="{{ onNewReceivableAmountChange }}">
+                </div>
+                <div class="field">
+                  <label>Note (optional)</label>
+                  <input class="input" type="text" placeholder="e.g. Lunch money" value="{{ newReceivableNote }}" sc-camel-on-change="{{ onNewReceivableNoteChange }}">
+                </div>
+                <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ addReceivable }}">Add</button>
+              </div>
+              <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: var(--space-3); text-align: center;">Marking someone as paid adds the amount to your active wallet automatically.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ overlayIsWallets }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" sc-camel-on-click="{{ closeOverlay }}">
+                  <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px; flex: 1;">Wallets</h2>
+                <a class="btn btn-ghost" style="padding: 0; font-size: 13px; cursor: pointer;" sc-camel-on-click="{{ openTransfer }}">Transfer</a>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-6);">
+                <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="3">
+                  <div class="card elev-sm" style="padding: var(--space-3); flex-direction: row; align-items: center; gap: var(--space-3);">
+                    <div style="flex: 1; font-size: 14px; font-weight: 600; font-family: var(--font-heading);">{{ w.name }}</div>
+                    <sc-if value="{{ w.isEditingBalance }}" hint-placeholder-val="{{ false }}">
+                      <div style="display: flex; align-items: baseline; gap: 2px;"><span style="font-size: 13px;">₱</span><input class="input" type="number" value="{{ w.balance }}" sc-camel-on-change="{{ w.onBalanceChange }}" style="width: 80px; padding: 4px 6px; text-align: right;"></div>
+                      <button class="btn btn-primary btn-icon" aria-label="Done editing" sc-camel-on-click="{{ w.stopEdit }}" style="flex: none;">
+                        <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"></path></svg>
+                      </button>
+                    </sc-if>
+                    <sc-if value="{{ !w.isEditingBalance }}" hint-placeholder-val="{{ true }}">
+                      <div style="font-size: 14px; font-weight: 600;">₱{{ w.balanceLabel }}</div>
+                      <button class="btn btn-secondary btn-icon" aria-label="Edit balance" sc-camel-on-click="{{ w.startEdit }}" style="flex: none;">
+                        <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
+                      </button>
+                    </sc-if>
+                    <button class="btn btn-secondary btn-icon" aria-label="Delete wallet" sc-camel-on-click="{{ w.remove }}" style="flex: none;">
+                      <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>
+                    </button>
+                  </div>
+                </sc-for>
+              </div>
+              <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-3);">
+                <div class="card-title" style="font-size: 14px;">Add a wallet</div>
+                <div class="field">
+                  <label>Name</label>
+                  <input class="input" type="text" placeholder="e.g. Savings" value="{{ newWalletName }}" sc-camel-on-change="{{ onNewWalletNameChange }}">
+                </div>
+                <div class="field">
+                  <label>Starting balance</label>
+                  <input class="input" type="number" placeholder="0.00" value="{{ newWalletBalance }}" sc-camel-on-change="{{ onNewWalletBalanceChange }}">
+                </div>
+                <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ addWallet }}">Add wallet</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ overlayIsTransfer }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-6);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" sc-camel-on-click="{{ closeOverlay }}">
+                  <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px;">Transfer between wallets</h2>
+              </div>
+              <div class="field">
+                <label>From</label>
+                <sc-raw-select class="input" value="{{ transferFromId }}" sc-camel-on-change="{{ onTransferFromChange }}">
+                  <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="3">
+                    <option value="{{ w.id }}">{{ w.name }}</option>
+                  </sc-for>
+                </sc-raw-select>
+              </div>
+              <div class="field" style="margin-top: var(--space-3);">
+                <label>To</label>
+                <sc-raw-select class="input" value="{{ transferToId }}" sc-camel-on-change="{{ onTransferToChange }}">
+                  <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="3">
+                    <option value="{{ w.id }}">{{ w.name }}</option>
+                  </sc-for>
+                </sc-raw-select>
+              </div>
+              <div class="field" style="margin-top: var(--space-3);">
+                <label>Amount</label>
+                <input class="input" type="number" step="0.01" placeholder="0.00" value="{{ transferAmount }}" sc-camel-on-change="{{ onTransferAmountChange }}">
+              </div>
+              <button class="btn btn-primary btn-block" style="height: 48px; margin-top: var(--space-6);" sc-camel-on-click="{{ submitTransfer }}">Transfer</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ overlayIsHistory }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" sc-camel-on-click="{{ closeOverlay }}">
+                  <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px;">History</h2>
+              </div>
+              <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2);">By month</div>
+              <div class="card elev-sm" style="padding: 0; gap: 0; margin-bottom: var(--space-6);">
+                <sc-for list="{{ monthlyHistory }}" as="m" hint-placeholder-count="4">
+                  <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider);">
+                    <div style="flex: 1; font-size: 14px;">{{ m.label }}</div>
+                    <div style="font-size: 14px; font-weight: 600;">₱{{ m.totalLabel }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2);">All transactions</div>
+              <div class="card elev-sm" style="padding: 0; gap: 0;">
+                <sc-for list="{{ transactions }}" as="t" hint-placeholder-count="10">
+                  <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ t.select }}">
+                    <div style="width: 30px; height: 30px; flex: none; background: #c0c0c0; display: flex; align-items: center; justify-content: center; color: var(--color-accent); overflow: hidden; background-image: {{ t.bgImage }}; background-size: cover; background-position: center;">
+                      <span style="font-size: 15px; {{ t.iconDisplay }}">{{ t.emoji }}</span>
+                    </div>
+                    <div style="flex: 1;">
+                      <div style="font-size: 14px; font-weight: 500;">{{ t.name }}</div>
+                      <div style="font-size: 11px; color: var(--color-neutral-600);">{{ t.category }} · {{ t.dateLabel }}</div>
+                    </div>
+                    <div style="font-size: 14px; font-weight: 600; color: {{ t.amountColor }};">{{ t.signedAmountLabel }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ overlayIsAdd }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" sc-camel-on-click="{{ closeOverlay }}">
+                  <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px;">Add transaction</h2>
+              </div>
+
+              <div class="seg" style="margin-bottom: var(--space-4);">
+                <label class="seg-opt" style="flex: 1; justify-content: center;"><input type="radio" checked="{{ formTypeIsExpense }}" sc-camel-on-change="{{ setTypeExpense }}">Expense</label>
+                <label class="seg-opt" style="flex: 1; justify-content: center;"><input type="radio" checked="{{ formTypeIsIncome }}" sc-camel-on-change="{{ setTypeIncome }}">Income</label>
+              </div>
+
+              <sc-if value="{{ formTypeIsExpense }}" hint-placeholder-val="{{ true }}">
+                <div style="display: flex; gap: 6px; overflow-x: auto; margin-bottom: var(--space-4); padding-bottom: 2px;">
+                  <sc-for list="{{ quickAdds }}" as="q" hint-placeholder-count="4">
+                    <button style="flex: none; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--color-divider); background: none; color: var(--color-text); font-size: 12px; cursor: pointer;" sc-camel-on-click="{{ q.apply }}">{{ q.label }}</button>
+                  </sc-for>
+                </div>
+              </sc-if>
+
+              <div class="field">
+                <label>What for</label>
+                <input class="input" type="text" placeholder="e.g. Coffee" value="{{ formName }}" sc-camel-on-change="{{ onFormNameChange }}">
+              </div>
+
+              <div class="field" style="margin-top: var(--space-3);">
+                <label>Date</label>
+                <input class="input" type="date" value="{{ formDate }}" sc-camel-on-change="{{ onFormDateChange }}">
+              </div>
+
+              <sc-if value="{{ formTypeIsExpense }}" hint-placeholder-val="{{ true }}">
+                <div class="field" style="margin-top: var(--space-3);">
+                  <label>Category</label>
+                  <sc-if value="{{ addingNewCategory }}" hint-placeholder-val="{{ false }}">
+                    <div style="display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2);">
+                      <div style="width: 40px; height: 40px; flex: none; background: var(--color-neutral-100); display: flex; align-items: center; justify-content: center; font-size: 20px;">{{ newCategoryEmoji }}</div>
+                      <input class="input" type="text" placeholder="New category name" value="{{ newCategoryName }}" sc-camel-on-change="{{ onNewCategoryNameChange }}" style="flex: 1;">
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--space-2);">
+                      <sc-for list="{{ emojiPalette }}" as="e" hint-placeholder-count="20">
+                        <button type="button" sc-camel-on-click="{{ e.pick }}" style="width: 30px; height: 30px; font-size: 15px; background: var(--color-neutral-100); border: 1px solid var(--color-divider); cursor: pointer; display: flex; align-items: center; justify-content: center; {{ e.highlight }}">{{ e.emoji }}</button>
+                      </sc-for>
+                    </div>
+                    <div class="field" style="margin-bottom: var(--space-2);">
+                      <label>Resets</label>
+                      <sc-raw-select class="input" value="{{ newCategoryPeriod }}" sc-camel-on-change="{{ onNewCategoryPeriodChange }}">
+                        <option value="daily">Daily</option>
+                          <option value="weekday">Weekdays only</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                        <option value="custom">Custom</option>
+                      </sc-raw-select>
+                    </div>
+                    <sc-if value="{{ isNewCategoryCustom }}" hint-placeholder-val="{{ false }}">
+                      <div class="field" style="margin-bottom: var(--space-2);">
+                        <label>Every how many days</label>
+                        <input class="input" type="number" min="1" placeholder="7" value="{{ newCategoryCustomDays }}" sc-camel-on-change="{{ onNewCategoryCustomDaysChange }}">
+                      </div>
+                    </sc-if>
+                    <div style="display: flex; gap: var(--space-2);">
+                      <button class="btn btn-primary" style="flex: 1; height: 40px;" sc-camel-on-click="{{ confirmNewCategoryInline }}">Add</button>
+                      <button class="btn btn-secondary" style="flex: none; height: 40px; padding: 0 14px;" sc-camel-on-click="{{ cancelNewCategoryInline }}">Cancel</button>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ !addingNewCategory }}" hint-placeholder-val="{{ true }}">
+                    <sc-raw-select class="input" value="{{ formCategory }}" sc-camel-on-change="{{ onFormCategoryChange }}">
+                      <sc-for list="{{ categoryOptions }}" as="opt" hint-placeholder-count="6">
+                        <option value="{{ opt.name }}">{{ opt.emoji }} {{ opt.name }}</option>
+                      </sc-for>
+                      <option value="__new__">+ Add new category</option>
+                    </sc-raw-select>
+                  </sc-if>
+                </div>
+              </sc-if>
+
+              <div class="field" style="margin-top: var(--space-3);">
+                <label>Pay from</label>
+                <sc-raw-select class="input" value="{{ formWalletId }}" sc-camel-on-change="{{ onFormWalletChange }}">
+                  <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="3">
+                    <option value="{{ w.id }}">{{ w.name }}</option>
+                  </sc-for>
+                </sc-raw-select>
+              </div>
+
+              <div class="field" style="margin-top: var(--space-3);">
+                <label>Amount</label>
+                <input class="input" type="number" step="0.01" placeholder="0.00" value="{{ formAmount }}" sc-camel-on-change="{{ onFormAmountChange }}">
+              </div>
+
+              <sc-if value="{{ formTypeIsExpense }}" hint-placeholder-val="{{ true }}">
+                <div class="field" style="margin-top: var(--space-3);">
+                  <label>Receipt photo</label>
+                  <input class="input" type="file" accept="image/*" sc-camel-on-change="{{ onPhotoChange }}">
+                  <div style="width: 64px; height: 64px; margin-top: var(--space-2); background-image: {{ formPhotoBg }}; background-size: cover; background-position: center; display: {{ formPhotoDisplay }};"></div>
+                </div>
+              </sc-if>
+
+              <button class="btn btn-primary btn-block" style="margin-top: var(--space-6); height: 48px;" sc-camel-on-click="{{ submitExpense }}">{{ submitLabel }}</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ overlayIsDetail }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-6);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" sc-camel-on-click="{{ closeOverlay }}">
+                  <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px; flex: 1;">Transaction</h2>
+                <sc-if value="{{ !editingTx }}" hint-placeholder-val="{{ true }}">
+                  <a class="btn btn-ghost" style="padding: 0; font-size: 13px; cursor: pointer;" sc-camel-on-click="{{ startEditTx }}">Edit</a>
+                </sc-if>
+              </div>
+              <sc-if value="{{ selectedTx }}" hint-placeholder-val="{{ false }}">
+                <sc-if value="{{ !editingTx }}" hint-placeholder-val="{{ true }}">
+                  <div style="display: flex; flex-direction: column; align-items: center; gap: var(--space-2); margin-bottom: var(--space-6);">
+                    <div style="width: 96px; height: 96px; margin-bottom: var(--space-2); background-image: {{ selectedTx.bgImage }}; background-size: cover; background-position: center; display: {{ selectedTx.photoDisplay }};"></div>
+                    <div style="font-size: 20px; font-weight: 700; font-family: var(--font-heading);">{{ selectedTx.name }}</div>
+                    <div style="font-size: 28px; font-weight: 800; font-family: var(--font-heading); color: {{ selectedTx.amountColor }};">{{ selectedTx.signedAmountLabel }}</div>
+                    <div style="font-size: 12px; color: var(--color-neutral-600);">{{ selectedTx.dateLabel }}</div>
+                  </div>
+                  <sc-if value="{{ selectedTx.isExpense }}" hint-placeholder-val="{{ true }}">
+                    <div class="field">
+                      <label>Category</label>
+                      <sc-raw-select class="input" value="{{ selectedTx.category }}" sc-camel-on-change="{{ onSelectedCategoryChange }}">
+                        <sc-for list="{{ categoryOptions }}" as="opt" hint-placeholder-count="6">
+                          <option value="{{ opt.name }}">{{ opt.emoji }} {{ opt.name }}</option>
+                        </sc-for>
+                      </sc-raw-select>
+                    </div>
+                  </sc-if>
+                  <button class="btn btn-block" style="height: 44px; color: #c0392b; border: 1px solid #c0392b; justify-content: center; margin-top: var(--space-4);" sc-camel-on-click="{{ deleteSelected }}">Delete transaction</button>
+                </sc-if>
+
+                <sc-if value="{{ editingTx }}" hint-placeholder-val="{{ false }}">
+                  <div class="field">
+                    <label>Name</label>
+                    <input class="input" type="text" value="{{ editTxName }}" sc-camel-on-change="{{ onEditTxNameChange }}">
+                  </div>
+                  <div class="field">
+                    <label>Amount</label>
+                    <input class="input" type="number" step="0.01" value="{{ editTxAmount }}" sc-camel-on-change="{{ onEditTxAmountChange }}">
+                  </div>
+                  <div class="field">
+                    <label>Date</label>
+                    <input class="input" type="date" value="{{ editTxDate }}" sc-camel-on-change="{{ onEditTxDateChange }}">
+                  </div>
+                  <div class="field">
+                    <label>Pay from</label>
+                    <sc-raw-select class="input" value="{{ editTxWalletId }}" sc-camel-on-change="{{ onEditTxWalletChange }}">
+                      <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="3">
+                        <option value="{{ w.id }}">{{ w.name }}</option>
+                      </sc-for>
+                    </sc-raw-select>
+                  </div>
+                  <sc-if value="{{ selectedTx.isExpense }}" hint-placeholder-val="{{ true }}">
+                    <div class="field">
+                      <label>Category</label>
+                      <sc-raw-select class="input" value="{{ editTxCategory }}" sc-camel-on-change="{{ onEditTxCategoryChange }}">
+                        <sc-for list="{{ categoryOptions }}" as="opt" hint-placeholder-count="6">
+                          <option value="{{ opt.name }}">{{ opt.emoji }} {{ opt.name }}</option>
+                        </sc-for>
+                      </sc-raw-select>
+                    </div>
+                  </sc-if>
+                  <div style="display: flex; gap: var(--space-2); margin-top: var(--space-4);">
+                    <button class="btn btn-primary" style="flex: 1; height: 44px;" sc-camel-on-click="{{ saveEditTx }}">Save changes</button>
+                    <button class="btn btn-secondary" style="flex: none; height: 44px; padding: 0 16px;" sc-camel-on-click="{{ cancelEditTx }}">Cancel</button>
+                  </div>
+                </sc-if>
+              </sc-if>
+            </div>
+          </sc-if>
+
+        </div>
+
+          <sc-if value="{{ pendingDelete }}" hint-placeholder-val="{{ false }}">
+            <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 999; padding: 24px; box-sizing: border-box;">
+              <div class="card elev-sm" style="padding: var(--space-5); max-width: 320px; width: 100%; gap: var(--space-3); background: var(--color-surface);">
+                <div style="font-size: 16px; font-weight: 700; font-family: var(--font-heading);">Delete {{ pendingDelete.label }}?</div>
+                <div style="font-size: 13px; color: var(--color-neutral-600);">This can't be undone.</div>
+                <div style="display: flex; gap: var(--space-2); margin-top: var(--space-2);">
+                  <button class="btn btn-secondary" style="flex: 1; height: 42px;" sc-camel-on-click="{{ cancelPendingDelete }}">Cancel</button>
+                  <button class="btn btn-block" style="flex: 1; height: 42px; color: #fff; background: #c0392b; justify-content: center;" sc-camel-on-click="{{ executePendingDelete }}">Delete</button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ pendingRolloverDecision }}" hint-placeholder-val="{{ false }}">
+            <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 999; padding: 24px; box-sizing: border-box;">
+              <div class="card elev-sm" style="padding: var(--space-5); max-width: 320px; width: 100%; gap: var(--space-3); background: var(--color-surface); max-height: 80vh; overflow-y: auto;">
+                <div style="font-size: 16px; font-weight: 700; font-family: var(--font-heading);">{{ pendingRolloverDecision.category }} had ₱{{ pendingRolloverDecision.amountLabel }} left over</div>
+                <div style="font-size: 13px; color: var(--color-neutral-600);">Add it to this period's budget, save it to a wallet, or put it toward a goal?</div>
+                <div style="display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2);">
+                  <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ pendingRolloverDecision.addToBudget }}">Add to budget</button>
+                </div>
+                <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-neutral-600); margin-top: var(--space-2);">Or save to a wallet</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                  <sc-for list="{{ pendingRolloverDecision.walletOptions }}" as="w" hint-placeholder-count="3">
+                    <button type="button" sc-camel-on-click="{{ w.apply }}" style="height: 44px; padding: 0 14px; border-radius: var(--radius-md); border: 1px solid var(--color-divider); background: var(--color-neutral-100); color: var(--color-text); font-family: var(--font-heading); font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;">{{ w.name }}</button>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ pendingRolloverDecision.hasGoals }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-neutral-600); margin-top: var(--space-2);">Or put toward a goal</div>
+                  <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <sc-for list="{{ pendingRolloverDecision.goalOptions }}" as="g" hint-placeholder-count="3">
+                      <button type="button" sc-camel-on-click="{{ g.apply }}" style="height: 44px; padding: 0 14px; border-radius: var(--radius-md); border: 1px solid var(--color-divider); background: var(--color-neutral-100); color: var(--color-text); font-family: var(--font-heading); font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;">{{ g.name }}</button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ hasMoreRollovers }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size: 11px; color: var(--color-neutral-500); text-align: center; margin-top: var(--space-2);">{{ pendingRolloverCount }} to review</div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+
+      </sc-if>
+
+
+</template>
+<script>
+// ===================== Mini template engine =====================
+// Interprets {{ expr }}, <sc-if value="{{ expr }}">, <sc-for list="{{ expr }}" as="x">,
+// <sc-raw-select>, and sc-camel-on-*/sc-camel-* attribute bindings.
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const SVG_TAGS = new Set(['svg','path','circle','line','polyline','rect','g','text','polygon','ellipse']);
+
+function evalExpr(expr, scope) {
+  try {
+    return new Function('scope', 'with (scope) { return (' + expr + '); }')(scope);
+  } catch (e) {
+    console.error('Template eval error for expr:', expr, e);
+    return '';
+  }
+}
+
+function interpolate(str, scope) {
+  return str.replace(/\{\{\s*(.*?)\s*\}\}/g, (_, expr) => {
+    const val = evalExpr(expr, scope);
+    return val === undefined || val === null ? '' : String(val);
+  });
+}
+
+function singleExpr(str) {
+  const m = /^\{\{\s*(.*?)\s*\}\}$/.exec(str.trim());
+  return m ? m[1] : str;
+}
+
+function toCamel(kebab) {
+  return kebab.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+}
+
+// Compiles a DOM node (from the parsed template) into an array of real, live
+// DOM nodes given the current scope (view-model + loop variables).
+function getItemKey(item) {
+  if (item && typeof item === 'object') {
+    if (item.id !== undefined) return String(item.id);
+    if (item.name !== undefined) return String(item.name);
+  }
+  return null;
+}
+
+function compileNode(node, scope, svgMode) {
+  if (node.nodeType === Node.TEXT_NODE) {
+    const text = interpolate(node.textContent, scope);
+    return text.length ? [document.createTextNode(text)] : [document.createTextNode('')];
+  }
+  if (node.nodeType !== Node.ELEMENT_NODE) return [];
+
+  const tag = node.tagName.toLowerCase();
+
+  if (tag === 'sc-if') {
+    const expr = singleExpr(node.getAttribute('value') || '');
+    const cond = evalExpr(expr, scope);
+    if (!cond) return [];
+    let out = [];
+    for (const child of Array.from(node.childNodes)) out = out.concat(compileNode(child, scope, svgMode));
+    return out;
+  }
+
+  if (tag === 'sc-for') {
+    const expr = singleExpr(node.getAttribute('list') || '');
+    const asName = node.getAttribute('as');
+    const list = evalExpr(expr, scope) || [];
+    let out = [];
+    list.forEach((item) => {
+      const childScope = Object.create(scope);
+      childScope[asName] = item;
+      let iterNodes = [];
+      for (const child of Array.from(node.childNodes)) iterNodes = iterNodes.concat(compileNode(child, childScope, svgMode));
+      const key = getItemKey(item);
+      if (key !== null) {
+        const firstEl = iterNodes.find(n => n.nodeType === Node.ELEMENT_NODE);
+        if (firstEl) firstEl.setAttribute('data-sc-key', key);
+      }
+      out = out.concat(iterNodes);
+    });
+    return out;
+  }
+
+  if (tag === 'sc-raw-select') {
+    const select = document.createElement('select');
+    applyAttrs(select, node, scope);
+    let opts = [];
+    for (const child of Array.from(node.childNodes)) opts = opts.concat(compileNode(child, scope, false));
+    opts.forEach(o => select.appendChild(o));
+    const valExpr = node.getAttribute('value');
+    if (valExpr) select.value = interpolate(valExpr, scope);
+    return [select];
+  }
+
+  const isSvg = svgMode || tag === 'svg';
+  const el = isSvg ? document.createElementNS(SVG_NS, tag) : document.createElement(tag);
+  applyAttrs(el, node, scope);
+  for (const child of Array.from(node.childNodes)) {
+    for (const c of compileNode(child, scope, isSvg)) el.appendChild(c);
+  }
+  return [el];
+}
+
+function applyAttrs(el, node, scope) {
+  for (const attr of Array.from(node.attributes)) {
+    const name = attr.name;
+    const value = attr.value;
+
+    if (name.startsWith('hint-placeholder')) continue;
+    if (name === 'list' || (el.tagName.toLowerCase() === 'sc-for' && name === 'as')) continue;
+
+    if (name.startsWith('sc-camel-on-')) {
+      const evt = name.slice('sc-camel-on-'.length);
+      const expr = singleExpr(value);
+      const fn = evalExpr(expr, scope);
+      if (typeof fn === 'function') el.addEventListener(evt, fn);
+      continue;
+    }
+    if (name.startsWith('sc-camel-')) {
+      const attrName = toCamel(name.slice('sc-camel-'.length));
+      el.setAttribute(attrName, interpolate(value, scope));
+      continue;
+    }
+    if (name === 'checked') {
+      const expr = singleExpr(value);
+      el.checked = !!evalExpr(expr, scope);
+      continue;
+    }
+    if (name === 'value' && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+      el.value = interpolate(value, scope);
+      el.setAttribute('value', el.value);
+      continue;
+    }
+    el.setAttribute(name, interpolate(value, scope));
+  }
+}
+
+// ===================== DOM morph/patch (preserves input focus) =====================
+
+function morph(oldNode, newNode) {
+  if (oldNode.nodeType !== newNode.nodeType || oldNode.nodeName !== newNode.nodeName) {
+    oldNode.replaceWith(newNode);
+    return newNode;
+  }
+  if (oldNode.nodeType === Node.TEXT_NODE) {
+    if (oldNode.textContent !== newNode.textContent) oldNode.textContent = newNode.textContent;
+    return oldNode;
+  }
+  if (oldNode.nodeType === Node.ELEMENT_NODE) {
+    for (const a of Array.from(oldNode.attributes)) {
+      if (!newNode.hasAttribute(a.name)) oldNode.removeAttribute(a.name);
+    }
+    for (const a of Array.from(newNode.attributes)) {
+      if (oldNode.getAttribute(a.name) !== a.value) oldNode.setAttribute(a.name, a.value);
+    }
+    const isFormEl = oldNode.tagName === 'INPUT' || oldNode.tagName === 'TEXTAREA' || oldNode.tagName === 'SELECT';
+    if (isFormEl && document.activeElement !== oldNode) {
+      if ('value' in newNode && oldNode.value !== newNode.value) oldNode.value = newNode.value;
+      if (oldNode.type === 'radio' || oldNode.type === 'checkbox') oldNode.checked = newNode.checked;
+    }
+    const oldKids = Array.from(oldNode.childNodes);
+    const newKids = Array.from(newNode.childNodes);
+    morphChildren(oldNode, oldKids, newKids);
+  }
+  return oldNode;
+}
+
+function getKeyOf(n) {
+  return (n.nodeType === Node.ELEMENT_NODE && n.getAttribute) ? n.getAttribute('data-sc-key') : null;
+}
+
+function morphChildren(parent, oldKids, newKids) {
+  const anyKeyed = newKids.some(k => getKeyOf(k) !== null);
+
+  if (!anyKeyed) {
+    // No stable identity involved here (plain markup) - simple positional patch is safe.
+    const max = Math.max(oldKids.length, newKids.length);
+    for (let i = 0; i < max; i++) {
+      if (i >= oldKids.length) {
+        parent.appendChild(newKids[i]);
+      } else if (i >= newKids.length) {
+        parent.removeChild(oldKids[i]);
+      } else {
+        morph(oldKids[i], newKids[i]);
+      }
+    }
+    return;
+  }
+
+  // Keyed reconciliation: match nodes by stable identity (item.id/name) rather
+  // than list position, so an existing DOM node - and its event listeners -
+  // only ever gets reused for the SAME logical item, even if the list was
+  // reordered, had items inserted, or had items removed.
+  const oldByKey = new Map();
+  oldKids.forEach(k => {
+    const key = getKeyOf(k);
+    if (key !== null) oldByKey.set(key, k);
+  });
+
+  const usedOld = new Set();
+  const liveNodes = newKids.map(newChild => {
+    const key = getKeyOf(newChild);
+    if (key !== null && oldByKey.has(key)) {
+      const match = oldByKey.get(key);
+      usedOld.add(match);
+      morph(match, newChild);
+      return match;
+    }
+    return newChild; // brand-new item; already has correct listeners from construction
+  });
+
+  oldKids.forEach(k => {
+    if (!usedOld.has(k) && k.parentNode === parent) parent.removeChild(k);
+  });
+
+  liveNodes.forEach((node, i) => {
+    const current = parent.childNodes[i];
+    if (current !== node) parent.insertBefore(node, current || null);
+  });
+}
+
+// ===================== App bootstrap =====================
+
+function mountApp(templateEl, rootEl, getViewModel) {
+  function render() {
+    const scope = getViewModel();
+    const frag = document.createDocumentFragment();
+    for (const child of Array.from(templateEl.content.childNodes)) {
+      for (const n of compileNode(child, scope, false)) frag.appendChild(n);
+    }
+    const newKids = Array.from(frag.childNodes);
+    const oldKids = Array.from(rootEl.childNodes);
+    morphChildren(rootEl, oldKids, newKids);
+  }
+  return render;
+}
+
+</script>
+<script>
+// ===================== App state & logic =====================
+
+const CATEGORY_ICONS = {
+  Gas: 'M3 22V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16 M3 22h10 M13 8h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2',
+  Clothing: 'M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z',
+  Shopping: 'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z M3 6h18 M16 10a4 4 0 0 1-8 0',
+  Groceries: 'M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12',
+  Dining: 'M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2 M7 2v20 M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7',
+  Transport: 'M5 17H3v-6l2-5h12l2 5h2v6h-2 M5 17h10',
+  Bills: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
+  Entertainment: 'M9 18V5l12-2v13 M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0z M21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
+  Health: 'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z',
+  Education: 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z',
+  Rent: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10',
+  Subscriptions: 'M17 1l4 4-4 4 M3 11V9a4 4 0 0 1 4-4h14 M7 23l-4-4 4-4 M21 13v2a4 4 0 0 1-4 4H3',
+  'Personal Care': 'M6 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M20 4 8.12 15.88 M14.47 14.48 20 20 M8.12 8.12 12 12',
+  Travel: 'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+  Gifts: 'M20 12v10H4V12 M2 7h20v5H2z M12 22V7 M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z',
+  Pets: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M8 14s1.5 2 4 2 4-2 4-2 M9 9h.01 M15 9h.01',
+  Other: 'M12 2v20M2 12h20',
+};
+
+const CATEGORY_EMOJIS_DEFAULT = {
+  Gas: '⛽', Clothing: '👕', Shopping: '🛍️', Groceries: '🛒', Dining: '🍽️', Transport: '🚌',
+  Bills: '🧾', Entertainment: '🎬', Health: '❤️', Education: '📚', Rent: '🏠',
+  Subscriptions: '🔁', 'Personal Care': '💇', Travel: '✈️', Gifts: '🎁', Pets: '🐾',
+};
+const EMOJI_PALETTE = ['🍔','🚗','🛍️','🏠','🎬','🎮','✈️','💊','❤️','📚','🎁','🐾','💇','🔁','🧾','💡','📱','🎵','⚽','☕'];
+
+const QUICK_ADDS = [
+  { name: 'Jeepney fare', category: 'Transport', amount: 13 },
+  { name: 'Coffee', category: 'Dining', amount: 120 },
+  { name: 'Mobile load', category: 'Other', amount: 50 },
+  { name: 'Lunch', category: 'Dining', amount: 150 },
+];
+
+const STORAGE_KEY = 'expenseTrackerState_v2';
+const DEFAULT_STATE = {
+  showOnboarding: true,
+  tab: 'home',
+  darkMode: false,
+  wallets: [
+    { id: 'cash', name: 'Cash', balance: 1200 },
+    { id: 'bank', name: 'Bank', balance: 2000 },
+    { id: 'ewallet', name: 'E-wallet', balance: 500 },
+  ],
+  activeWalletId: 'cash',
+  defaultWalletId: '',
+  budgets: {
+    Gas: 300, Clothing: 400, Shopping: 450, Groceries: 450, Dining: 300, Transport: 200,
+    Bills: 800, Entertainment: 200, Health: 300, Education: 250, Rent: 4000,
+    Subscriptions: 150, 'Personal Care': 150, Travel: 300, Gifts: 100, Pets: 150,
+  },
+  categoryEmojis: { ...CATEGORY_EMOJIS_DEFAULT },
+  budgetPeriods: {},
+  budgetCustomDays: {},
+  budgetRollovers: {},
+  budgetLastPeriodKey: {},
+  pendingRolloverDecisions: [],
+  rolloverHistory: [],
+  transactions: [
+    { id: 1, name: 'Shell Gas Station', category: 'Gas', type: 'expense', walletId: 'cash', amount: 42.10, dateISO: '2026-08-15', photo: null },
+    { id: 2, name: 'Zara', category: 'Clothing', type: 'expense', walletId: 'cash', amount: 89.99, dateISO: '2026-08-14', photo: null },
+    { id: 3, name: 'Whole Foods', category: 'Groceries', type: 'expense', walletId: 'cash', amount: 64.35, dateISO: '2026-08-13', photo: null },
+    { id: 4, name: 'Target', category: 'Shopping', type: 'expense', walletId: 'bank', amount: 156.20, dateISO: '2026-08-12', photo: null },
+    { id: 5, name: 'Chipotle', category: 'Dining', type: 'expense', walletId: 'cash', amount: 18.40, dateISO: '2026-08-11', photo: null },
+  ],
+  notificationsOn: true,
+  homeInfoTab: 'recent',
+  recurringBills: [],
+  autoDailyExpenses: [],
+  receivables: [],
+  userName: '',
+  notifiedThisMonth: {},
+  _categoriesMigratedV2: true,
+  savingsGoals: [
+    { id: 'g1', name: 'Emergency fund', saved: 2400, target: 5000 },
+    { id: 'g2', name: 'New laptop', saved: 860, target: 1200 },
+    { id: 'g3', name: 'Vacation', saved: 310, target: 1500 },
+  ],
+};
+
+function loadPersisted() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return DEFAULT_STATE;
+    const parsed = JSON.parse(raw);
+    let budgets = parsed.budgets || {};
+    let categoryEmojis = parsed.categoryEmojis || {};
+    // One-time migration: bring in any newly-added default categories (and
+    // their emoji) for people who already have older saved data, without
+    // reintroducing categories they've since deleted on repeat visits.
+    if (!parsed._categoriesMigratedV2) {
+      budgets = { ...DEFAULT_STATE.budgets, ...budgets };
+      categoryEmojis = { ...DEFAULT_STATE.categoryEmojis, ...categoryEmojis };
+    }
+    return { ...DEFAULT_STATE, ...parsed, budgets, categoryEmojis, _categoriesMigratedV2: true };
+  } catch (e) { return DEFAULT_STATE; }
+}
+const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'defaultWalletId', 'budgets', 'budgetPeriods', 'budgetCustomDays', 'budgetRollovers', 'budgetLastPeriodKey', 'pendingRolloverDecisions', 'rolloverHistory', 'categoryEmojis', 'transactions', 'notificationsOn', 'savingsGoals', 'homeInfoTab', 'recurringBills', 'autoDailyExpenses', 'receivables', 'userName', 'notifiedThisMonth', '_categoriesMigratedV2'];
+
+function formatDateLabel(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return 'Today';
+  const yest = new Date(now); yest.setDate(now.getDate() - 1);
+  if (d.toDateString() === yest.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+function formatMonthLabel(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+function getWeekBounds(d) {
+  const day = d.getDay(); // 0=Sun..6=Sat
+  const diffToMonday = (day === 0 ? -6 : 1) - day;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diffToMonday);
+  monday.setHours(0, 0, 0, 0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  return { startISO: monday.toISOString().slice(0, 10), endISO: sunday.toISOString().slice(0, 10) };
+}
+const CUSTOM_CYCLE_EPOCH = Date.UTC(2024, 0, 1); // fixed reference point so cycles are consistent
+function customCycleBucket(dateISO, days) {
+  const t = Date.UTC(...dateISO.split('-').map(Number));
+  const daysSinceEpoch = Math.floor((t - CUSTOM_CYCLE_EPOCH) / 86400000);
+  return Math.floor(daysSinceEpoch / Math.max(1, days));
+}
+function weekStartISO(dateISO) {
+  const [y, m, d] = dateISO.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const day = dt.getUTCDay();
+  const diffToMonday = (day === 0 ? -6 : 1) - day;
+  dt.setUTCDate(dt.getUTCDate() + diffToMonday);
+  return dt.toISOString().slice(0, 10);
+}
+// A stable string identifying which "instance" of a period a date falls in,
+// e.g. two dates in the same calendar month share the same monthly key.
+// Used to detect when a category's period has closed so leftover budget can roll over.
+function weekdayPeriodKey(dateISO) {
+  const [y, m, d] = dateISO.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const day = dt.getUTCDay(); // 0=Sun..6=Sat
+  if (day === 0) dt.setUTCDate(dt.getUTCDate() - 2); // Sunday -> preceding Friday
+  else if (day === 6) dt.setUTCDate(dt.getUTCDate() - 1); // Saturday -> preceding Friday
+  return 'wd' + dt.toISOString().slice(0, 10);
+}
+function periodKeyFor(dateISO, periodType, customDays) {
+  if (periodType === 'daily') return dateISO;
+  if (periodType === 'weekday') return weekdayPeriodKey(dateISO);
+  if (periodType === 'weekly') return weekStartISO(dateISO);
+  if (periodType === 'yearly') return dateISO.slice(0, 4);
+  if (periodType === 'custom') return 'c' + customCycleBucket(dateISO, customDays || 7);
+  return dateISO.slice(0, 7); // monthly
+}
+
+class Component {
+  constructor(renderFn) {
+    this._render = renderFn;
+    this.state = {
+      ...loadPersisted(),
+      overlay: null,
+      selectedTxId: null,
+      formName: '',
+      formAmount: '',
+      formCategory: 'Gas',
+      formType: 'expense',
+      formPhoto: null,
+      formWalletId: null,
+      formDate: new Date().toISOString().slice(0, 10),
+      searchQuery: '',
+      newWalletName: '',
+      newWalletBalance: '',
+      newGoalName: '',
+      newGoalTarget: '',
+      newCategoryName: '',
+      newCategoryBudget: '',
+      newCategoryEmoji: '',
+      newCategoryPeriod: 'monthly',
+      newCategoryCustomDays: '7',
+      newCategoryTarget: 'form',
+      addingNewCategory: false,
+      editingEmojiFor: null,
+      editingWalletId: null,
+      savingRolloverFor: null,
+      editingTx: false,
+      editTxName: '',
+      editTxAmount: '',
+      editTxDate: '',
+      editTxWalletId: null,
+      editTxCategory: '',
+      pendingDelete: null,
+      transferFromId: null,
+      transferToId: null,
+      transferAmount: '',
+      newRecurringName: '',
+      newRecurringAmount: '',
+      newRecurringDay: '1',
+      newRecurringCategory: '',
+      newAutoDailyCategory: '',
+      newAutoDailyAmount: '',
+      newAutoDailyWalletId: '',
+      newAutoDailyFrequency: 'daily',
+      newAutoDailyCustomDays: '7',
+      newReceivableName: '',
+      newReceivableAmount: '',
+      newReceivableNote: '',
+      importError: null,
+    };
+    this.checkAndApplyRecurring();
+    this.checkAndApplyAutoDailyExpenses();
+    this.checkAndApplyRollovers();
+    this.persist(); // lock in the one-time category migration flag (and any recurring bills applied just now)
+  }
+
+  setState(update) {
+    const patch = typeof update === 'function' ? update(this.state) : update;
+    const prevTab = this.state.tab;
+    const prevOverlay = this.state.overlay;
+    this.state = { ...this.state, ...patch };
+    this.persist();
+    this._render();
+    if (this.state.tab !== prevTab || this.state.overlay !== prevOverlay) {
+      window.scrollTo(0, 0);
+    }
+  }
+
+  persist() {
+    try {
+      const toSave = {};
+      PERSIST_KEYS.forEach(k => toSave[k] = this.state[k]);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    } catch (e) {}
+  }
+
+  finishOnboarding = () => this.setState({ showOnboarding: false });
+  goHome = () => this.setState({ tab: 'home' });
+  goAnalytics = () => this.setState({ tab: 'analytics' });
+  goSavings = () => this.setState({ tab: 'savings' });
+  goSettings = () => this.setState({ tab: 'settings' });
+
+  openOverlay = (name) => {
+    const defaultExists = this.state.wallets.some(w => w.id === this.state.defaultWalletId);
+    const fallbackWalletId = (defaultExists && this.state.defaultWalletId) || this.state.activeWalletId;
+    this.setState({
+      overlay: name,
+      formWalletId: name === 'add' ? fallbackWalletId : this.state.activeWalletId,
+      formDate: name === 'add' ? new Date().toISOString().slice(0, 10) : this.state.formDate,
+      addingNewCategory: false,
+      newCategoryName: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly', newCategoryCustomDays: '7',
+    });
+  };
+  closeOverlay = () => this.setState({ overlay: null, selectedTxId: null });
+
+  switchWallet = (id) => this.setState({ activeWalletId: id });
+  onWalletBalanceChange = (e) => {
+    const raw = e.target.value;
+    if (raw === '') {
+      this.setState(s => ({ wallets: s.wallets.map(w => w.id === s.activeWalletId ? { ...w, balance: '' } : w) }));
+      return;
+    }
+    const val = parseFloat(raw);
+    if (isNaN(val)) return;
+    this.setState(s => ({ wallets: s.wallets.map(w => w.id === s.activeWalletId ? { ...w, balance: val } : w) }));
+  };
+  onWalletBalanceChangeFor = (id, e) => {
+    const raw = e.target.value;
+    if (raw === '') {
+      this.setState(s => ({ wallets: s.wallets.map(w => w.id === id ? { ...w, balance: '' } : w) }));
+      return;
+    }
+    const val = parseFloat(raw);
+    if (isNaN(val)) return;
+    this.setState(s => ({ wallets: s.wallets.map(w => w.id === id ? { ...w, balance: val } : w) }));
+  };
+  onNewWalletNameChange = (e) => this.setState({ newWalletName: e.target.value });
+  onNewWalletBalanceChange = (e) => this.setState({ newWalletBalance: e.target.value });
+  // === Recurring bills ===
+  onNewRecurringNameChange = (e) => this.setState({ newRecurringName: e.target.value });
+  onNewRecurringAmountChange = (e) => this.setState({ newRecurringAmount: e.target.value });
+  onNewRecurringDayChange = (e) => this.setState({ newRecurringDay: e.target.value });
+  onNewRecurringCategoryChange = (e) => this.setState({ newRecurringCategory: e.target.value });
+  addRecurringBill = () => {
+    const name = (this.state.newRecurringName || '').trim();
+    const amount = parseFloat(this.state.newRecurringAmount);
+    const day = Math.min(28, Math.max(1, parseInt(this.state.newRecurringDay, 10) || 1));
+    if (!name || isNaN(amount) || amount <= 0) return;
+    const id = 'r' + Date.now();
+    const bill = {
+      id, name, amount, dayOfMonth: day,
+      category: this.state.newRecurringCategory || 'Bills',
+      walletId: this.state.activeWalletId,
+      active: true, lastAppliedMonth: null,
+    };
+    this.setState(s => ({
+      recurringBills: [...s.recurringBills, bill],
+      newRecurringName: '', newRecurringAmount: '', newRecurringDay: '1', newRecurringCategory: '',
+    }));
+  };
+  toggleRecurringActive = (id) => this.setState(s => ({
+    recurringBills: s.recurringBills.map(b => b.id === id ? { ...b, active: !b.active } : b),
+  }));
+  doDeleteRecurring = (id) => this.setState(s => ({ recurringBills: s.recurringBills.filter(b => b.id !== id) }));
+  removeRecurringBill = (id) => {
+    const b = this.state.recurringBills.find(b => b.id === id);
+    this.confirmDelete('recurring', id, b ? b.name : 'this bill');
+  };
+
+  // Runs once when the app opens: applies any active recurring bill that's
+  // due this month and hasn't already been logged, since a PWA has no
+  // reliable way to run in the background on its own schedule.
+  checkAndApplyRecurring() {
+    const today = new Date();
+    const todayISO = today.toISOString().slice(0, 10);
+    const currentMonth = todayISO.slice(0, 7);
+    const todayDay = today.getDate();
+    let wallets = this.state.wallets;
+    const newTxs = [];
+    const updatedBills = this.state.recurringBills.map(b => {
+      if (!b.active) return b;
+      if (b.lastAppliedMonth === currentMonth) return b;
+      if (todayDay < b.dayOfMonth) return b;
+      const amt = parseFloat(b.amount) || 0;
+      if (amt <= 0) return b;
+      wallets = wallets.map(w => w.id === b.walletId ? { ...w, balance: (parseFloat(w.balance) || 0) - amt } : w);
+      newTxs.push({
+        id: Date.now() + Math.floor(Math.random() * 1000), name: b.name, category: b.category,
+        type: 'expense', walletId: b.walletId, amount: amt, dateISO: todayISO, photo: null, isRecurring: true,
+      });
+      return { ...b, lastAppliedMonth: currentMonth };
+    });
+    if (newTxs.length) {
+      this.state = { ...this.state, wallets, recurringBills: updatedBills, transactions: [...newTxs, ...this.state.transactions] };
+    }
+  }
+
+  // Runs once when the app opens: for every budgeted category, checks whether
+  // its period has closed since we last looked. If it has and the category
+  // was underspent, it queues a decision for the person to resolve (add the
+  // leftover to the current budget, or save it straight to a wallet) rather
+  // than applying either outcome automatically.
+  checkAndApplyRollovers() {
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const lastKeys = { ...this.state.budgetLastPeriodKey };
+    const pending = [...this.state.pendingRolloverDecisions];
+    let changed = false;
+
+    Object.keys(this.state.budgets).forEach(name => {
+      const budget = parseFloat(this.state.budgets[name]) || 0;
+      const period = this.state.budgetPeriods[name] || 'monthly';
+      const customDays = parseInt(this.state.budgetCustomDays[name], 10) || 7;
+      const currentKey = periodKeyFor(todayISO, period, customDays);
+      const lastKey = lastKeys[name];
+
+      if (lastKey === undefined) {
+        lastKeys[name] = currentKey;
+        changed = true;
+        return;
+      }
+      if (lastKey === currentKey) return; // still the same period, nothing closed out yet
+
+      if (budget > 0) {
+        let spentInLastPeriod = 0;
+        this.state.transactions.forEach(t => {
+          if (t.type === 'income' || t.category !== name) return;
+          if (periodKeyFor(t.dateISO, period, customDays) === lastKey) spentInLastPeriod += t.amount;
+        });
+        const leftover = budget - spentInLastPeriod;
+        if (leftover > 0) {
+          pending.push({ id: name + ':' + lastKey, category: name, amount: leftover });
+        }
+      }
+      lastKeys[name] = currentKey;
+      changed = true;
+    });
+
+    if (changed) {
+      this.state = { ...this.state, budgetLastPeriodKey: lastKeys, pendingRolloverDecisions: pending };
+    }
+  }
+
+  rolloverAddToBudget = (id) => this.setState(s => {
+    const d = s.pendingRolloverDecisions.find(x => x.id === id);
+    if (!d) return {};
+    const historyEntry = { id: Date.now(), category: d.category, amount: d.amount, destination: 'Budget', dateISO: new Date().toISOString().slice(0, 10) };
+    return {
+      budgetRollovers: { ...s.budgetRollovers, [d.category]: (s.budgetRollovers[d.category] || 0) + d.amount },
+      pendingRolloverDecisions: s.pendingRolloverDecisions.filter(x => x.id !== id),
+      rolloverHistory: [historyEntry, ...s.rolloverHistory],
+    };
+  });
+  rolloverSaveToWallet = (id, walletId) => this.setState(s => {
+    const d = s.pendingRolloverDecisions.find(x => x.id === id);
+    if (!d) return {};
+    const targetWalletId = walletId || s.activeWalletId;
+    const walletName = (s.wallets.find(w => w.id === targetWalletId) || {}).name || 'wallet';
+    const wallets = s.wallets.map(w => w.id === targetWalletId ? { ...w, balance: (parseFloat(w.balance) || 0) + d.amount } : w);
+    const tx = {
+      id: Date.now(), name: `${d.category} budget savings`, category: 'Income', type: 'income',
+      walletId: targetWalletId, amount: d.amount, dateISO: new Date().toISOString().slice(0, 10), photo: null, isBudgetRollover: true,
+    };
+    const historyEntry = { id: Date.now() + 1, category: d.category, amount: d.amount, destination: walletName, dateISO: new Date().toISOString().slice(0, 10) };
+    return {
+      wallets, transactions: [tx, ...s.transactions],
+      pendingRolloverDecisions: s.pendingRolloverDecisions.filter(x => x.id !== id),
+      rolloverHistory: [historyEntry, ...s.rolloverHistory],
+    };
+  });
+  rolloverAddToGoal = (id, goalId) => this.setState(s => {
+    const d = s.pendingRolloverDecisions.find(x => x.id === id);
+    const goal = s.savingsGoals.find(g => g.id === goalId);
+    if (!d || !goal) return {};
+    const savingsGoals = s.savingsGoals.map(g => g.id === goalId ? { ...g, saved: (parseFloat(g.saved) || 0) + d.amount } : g);
+    const historyEntry = { id: Date.now(), category: d.category, amount: d.amount, destination: `"${goal.name}" goal`, dateISO: new Date().toISOString().slice(0, 10) };
+    return {
+      savingsGoals,
+      pendingRolloverDecisions: s.pendingRolloverDecisions.filter(x => x.id !== id),
+      rolloverHistory: [historyEntry, ...s.rolloverHistory],
+    };
+  });
+
+  toggleSaveRolloverPicker = (name) => this.setState({ savingRolloverFor: this.state.savingRolloverFor === name ? null : name });
+  saveCategoryRolloverToWallet = (name, walletId) => {
+    const amount = this.state.budgetRollovers[name] || 0;
+    if (amount <= 0) return;
+    this.setState(s => {
+      const targetWalletId = walletId || s.activeWalletId;
+      const walletName = (s.wallets.find(w => w.id === targetWalletId) || {}).name || 'wallet';
+      const wallets = s.wallets.map(w => w.id === targetWalletId ? { ...w, balance: (parseFloat(w.balance) || 0) + amount } : w);
+      const tx = {
+        id: Date.now(), name: `${name} budget savings`, category: 'Income', type: 'income',
+        walletId: targetWalletId, amount, dateISO: new Date().toISOString().slice(0, 10), photo: null, isBudgetRollover: true,
+      };
+      const historyEntry = { id: Date.now() + 1, category: name, amount, destination: walletName, dateISO: new Date().toISOString().slice(0, 10) };
+      return {
+        wallets, transactions: [tx, ...s.transactions],
+        budgetRollovers: { ...s.budgetRollovers, [name]: 0 },
+        rolloverHistory: [historyEntry, ...s.rolloverHistory],
+        savingRolloverFor: null,
+      };
+    });
+  };
+
+  // === Receivables (money owed to you) ===
+  onUserNameChange = (e) => this.setState({ userName: e.target.value });
+  onDefaultWalletChange = (e) => this.setState({ defaultWalletId: e.target.value });
+
+  onNewReceivableNameChange = (e) => this.setState({ newReceivableName: e.target.value });
+  onNewReceivableAmountChange = (e) => this.setState({ newReceivableAmount: e.target.value });
+  onNewReceivableNoteChange = (e) => this.setState({ newReceivableNote: e.target.value });
+  addReceivable = () => {
+    const name = (this.state.newReceivableName || '').trim();
+    const amount = parseFloat(this.state.newReceivableAmount);
+    if (!name || isNaN(amount) || amount <= 0) return;
+    const id = 'rcv' + Date.now();
+    this.setState(s => ({
+      receivables: [...s.receivables, {
+        id, personName: name, amount, note: (s.newReceivableNote || '').trim(),
+        dateISO: new Date().toISOString().slice(0, 10), settled: false,
+      }],
+      newReceivableName: '', newReceivableAmount: '', newReceivableNote: '',
+    }));
+  };
+  doDeleteReceivable = (id) => this.setState(s => ({ receivables: s.receivables.filter(r => r.id !== id) }));
+  removeReceivable = (id) => {
+    const r = this.state.receivables.find(r => r.id === id);
+    this.confirmDelete('receivable', id, r ? r.personName : 'this entry');
+  };
+  // Marking as paid credits your active wallet and logs an income transaction;
+  // unmarking reverses that exact transaction so balances stay correct.
+  toggleReceivableSettled = (id) => this.setState(s => {
+    const r = s.receivables.find(r => r.id === id);
+    if (!r) return {};
+    let wallets = s.wallets;
+    let transactions = s.transactions;
+    if (!r.settled) {
+      const walletId = s.activeWalletId;
+      wallets = wallets.map(w => w.id === walletId ? { ...w, balance: (parseFloat(w.balance) || 0) + r.amount } : w);
+      transactions = [{
+        id: Date.now(), name: `${r.personName} paid you back`, category: 'Income', type: 'income',
+        walletId, amount: r.amount, dateISO: new Date().toISOString().slice(0, 10), photo: null, receivableId: r.id,
+      }, ...transactions];
+    } else {
+      const linkedTx = transactions.find(t => t.receivableId === r.id);
+      if (linkedTx) {
+        wallets = wallets.map(w => w.id === linkedTx.walletId ? { ...w, balance: (parseFloat(w.balance) || 0) - linkedTx.amount } : w);
+        transactions = transactions.filter(t => t.id !== linkedTx.id);
+      }
+    }
+    return {
+      wallets, transactions,
+      receivables: s.receivables.map(x => x.id === id ? { ...x, settled: !r.settled } : x),
+    };
+  });
+
+  // === Automatic daily expenses (e.g. a daily allowance) ===
+  // Once created, an entry's category/amount/wallet/frequency are locked and
+  // cannot be edited - only deleted outright - so the deduction can't be
+  // casually changed.
+  onNewAutoDailyAmountChange = (e) => this.setState({ newAutoDailyAmount: e.target.value });
+  onNewAutoDailyWalletChange = (e) => this.setState({ newAutoDailyWalletId: e.target.value });
+  onNewAutoDailyFrequencyChange = (e) => this.setState({ newAutoDailyFrequency: e.target.value });
+  onNewAutoDailyCustomDaysChange = (e) => this.setState({ newAutoDailyCustomDays: e.target.value });
+  addAutoDailyExpense = () => {
+    const category = this.state.newAutoDailyCategory;
+    const amount = parseFloat(this.state.newAutoDailyAmount);
+    const walletId = this.state.newAutoDailyWalletId || this.state.activeWalletId;
+    const frequency = this.state.newAutoDailyFrequency || 'daily';
+    const customDays = Math.max(1, parseInt(this.state.newAutoDailyCustomDays, 10) || 7);
+    if (!category || isNaN(amount) || amount <= 0 || !walletId) return;
+    const id = 'auto' + Date.now();
+    const todayISO = new Date().toISOString().slice(0, 10);
+    this.setState(s => {
+      const currentKey = periodKeyFor(todayISO, frequency, customDays);
+      const entry = { id, category, amount, walletId, frequency, customDays, createdAt: todayISO, lastAppliedKey: currentKey };
+      const wallets = s.wallets.map(w => w.id === walletId ? { ...w, balance: (parseFloat(w.balance) || 0) - amount } : w);
+      const tx = {
+        id: Date.now() + 1, name: category, category, type: 'expense', walletId,
+        amount, dateISO: todayISO, photo: null, autoDailyExpenseId: id,
+      };
+      return {
+        autoDailyExpenses: [...s.autoDailyExpenses, entry],
+        wallets,
+        transactions: [tx, ...s.transactions],
+        newAutoDailyCategory: '', newAutoDailyAmount: '', newAutoDailyWalletId: '', newAutoDailyFrequency: 'daily', newAutoDailyCustomDays: '7',
+      };
+    });
+  };
+  doDeleteAutoDaily = (id) => this.setState(s => ({ autoDailyExpenses: s.autoDailyExpenses.filter(a => a.id !== id) }));
+  removeAutoDailyExpense = (id) => {
+    const a = this.state.autoDailyExpenses.find(a => a.id === id);
+    this.confirmDelete('autoDaily', id, a ? a.category : 'this automatic expense');
+  };
+
+  // Runs once when the app opens: makes sure every automatic expense has been
+  // deducted for its current period (day/weekday/week/month/year/custom cycle),
+  // without needing the person to add it by hand. Using the same period-key
+  // logic as budgets means a "weekdays only" entry naturally skips weekends:
+  // Saturday and Sunday share Friday's key, so if Friday's deduction already
+  // happened, the "already applied" check blocks it from firing again.
+  checkAndApplyAutoDailyExpenses() {
+    const todayISO = new Date().toISOString().slice(0, 10);
+    let wallets = this.state.wallets;
+    const newTxs = [];
+    const updatedEntries = this.state.autoDailyExpenses.map(a => {
+      const frequency = a.frequency || 'daily';
+      const customDays = a.customDays || 7;
+      const currentKey = periodKeyFor(todayISO, frequency, customDays);
+      if (a.lastAppliedKey === currentKey) return a; // already handled this period - deleting the resulting transaction doesn't undo that
+      const amt = parseFloat(a.amount) || 0;
+      if (amt <= 0) return { ...a, lastAppliedKey: currentKey };
+      wallets = wallets.map(w => w.id === a.walletId ? { ...w, balance: (parseFloat(w.balance) || 0) - amt } : w);
+      newTxs.push({
+        id: Date.now() + Math.floor(Math.random() * 1000), name: a.category, category: a.category,
+        type: 'expense', walletId: a.walletId, amount: amt, dateISO: todayISO, photo: null, autoDailyExpenseId: a.id,
+      });
+      return { ...a, lastAppliedKey: currentKey };
+    });
+    if (newTxs.length) {
+      this.state = { ...this.state, wallets, autoDailyExpenses: updatedEntries, transactions: [...newTxs, ...this.state.transactions] };
+    } else {
+      this.state = { ...this.state, autoDailyExpenses: updatedEntries };
+    }
+  }
+
+  openTransfer = () => {
+    const other = this.state.wallets.find(w => w.id !== this.state.activeWalletId);
+    this.setState({
+      overlay: 'transfer',
+      transferFromId: this.state.activeWalletId,
+      transferToId: other ? other.id : this.state.activeWalletId,
+      transferAmount: '',
+    });
+  };
+  onTransferFromChange = (e) => this.setState({ transferFromId: e.target.value });
+  onTransferToChange = (e) => this.setState({ transferToId: e.target.value });
+  onTransferAmountChange = (e) => this.setState({ transferAmount: e.target.value });
+  submitTransfer = () => {
+    const amt = parseFloat(this.state.transferAmount);
+    if (isNaN(amt) || amt <= 0) return;
+    const { transferFromId, transferToId } = this.state;
+    if (!transferFromId || !transferToId || transferFromId === transferToId) return;
+    this.setState(s => ({
+      wallets: s.wallets.map(w => {
+        if (w.id === transferFromId) return { ...w, balance: (parseFloat(w.balance) || 0) - amt };
+        if (w.id === transferToId) return { ...w, balance: (parseFloat(w.balance) || 0) + amt };
+        return w;
+      }),
+      overlay: null,
+      transferAmount: '',
+    }));
+  };
+
+  addWallet = () => {
+    const name = this.state.newWalletName.trim();
+    if (!name) return;
+    const balance = parseFloat(this.state.newWalletBalance) || 0;
+    const id = 'w' + Date.now();
+    this.setState(s => ({ wallets: [...s.wallets, { id, name, balance }], newWalletName: '', newWalletBalance: '' }));
+  };
+  doDeleteWallet = (id) => this.setState(s => {
+    if (s.wallets.length <= 1) return {};
+    const wallets = s.wallets.filter(w => w.id !== id);
+    const activeWalletId = s.activeWalletId === id ? wallets[0].id : s.activeWalletId;
+    const defaultWalletId = s.defaultWalletId === id ? '' : s.defaultWalletId;
+    return { wallets, activeWalletId, defaultWalletId };
+  });
+  removeWallet = (id) => {
+    const w = this.state.wallets.find(w => w.id === id);
+    if (this.state.wallets.length <= 1) return;
+    this.confirmDelete('wallet', id, w ? w.name : 'this wallet');
+  };
+  startEditWallet = (id) => this.setState({ editingWalletId: id });
+  stopEditWallet = () => this.setState({ editingWalletId: null });
+
+  onFormNameChange = (e) => this.setState({ formName: e.target.value });
+  onFormAmountChange = (e) => this.setState({ formAmount: e.target.value });
+  onFormWalletChange = (e) => this.setState({ formWalletId: e.target.value });
+  onFormCategoryChange = (e) => {
+    const val = e.target.value;
+    if (val === '__new__') {
+      this.setState({ addingNewCategory: true, newCategoryName: '', newCategoryTarget: 'form' });
+      return;
+    }
+    this.setState({ formCategory: val });
+  };
+  onNewAutoDailyCategoryChange = (e) => {
+    const val = e.target.value;
+    if (val === '__new__') {
+      this.setState({ addingNewCategory: true, newCategoryName: '', newCategoryTarget: 'autoDaily' });
+      return;
+    }
+    this.setState({ newAutoDailyCategory: val });
+  };
+  confirmNewCategoryInline = () => {
+    const name = this.state.newCategoryName.trim();
+    if (!name) { this.setState({ addingNewCategory: false }); return; }
+    const emoji = this.state.newCategoryEmoji || '📦';
+    const period = this.state.newCategoryPeriod || 'monthly';
+    const customDays = Math.max(1, parseInt(this.state.newCategoryCustomDays, 10) || 7);
+    const target = this.state.newCategoryTarget || 'form';
+    const targetField = target === 'autoDaily' ? 'newAutoDailyCategory' : 'formCategory';
+    if (this.state.budgets[name] === undefined) {
+      this.setState(s => ({
+        budgets: { ...s.budgets, [name]: 0 },
+        categoryEmojis: { ...s.categoryEmojis, [name]: emoji },
+        budgetPeriods: { ...s.budgetPeriods, [name]: period },
+        budgetCustomDays: { ...s.budgetCustomDays, [name]: customDays },
+        [targetField]: name, addingNewCategory: false, newCategoryName: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly', newCategoryCustomDays: '7',
+      }));
+    } else {
+      this.setState({ [targetField]: name, addingNewCategory: false, newCategoryName: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly', newCategoryCustomDays: '7' });
+    }
+  };
+  cancelNewCategoryInline = () => this.setState({ addingNewCategory: false, newCategoryName: '' });
+  onSearchChange = (e) => this.setState({ searchQuery: e.target.value });
+  // Fires a real browser notification for each budget alert that hasn't
+  // already been notified this month, so people aren't spammed on every render.
+  maybeSendNotifications(budgetAlerts) {
+    if (!this.state.notificationsOn) return;
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+    const monthKey = new Date().toISOString().slice(0, 7);
+    const notified = this.state.notifiedThisMonth || {};
+    let changed = false;
+    const updated = { ...notified };
+    budgetAlerts.forEach(a => {
+      const key = a.categoryName + ':' + monthKey;
+      if (!updated[key]) {
+        try { new Notification(a.title, { body: a.detail }); } catch (e) {}
+        updated[key] = true;
+        changed = true;
+      }
+    });
+    if (changed) {
+      this.state.notifiedThisMonth = updated;
+      this.persist();
+    }
+  }
+
+  toggleNotifications = () => {
+    const turningOn = !this.state.notificationsOn;
+    if (turningOn && typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+    this.setState(s => ({ notificationsOn: !s.notificationsOn }));
+  };
+  toggleDarkMode = () => this.setState(s => ({ darkMode: !s.darkMode }));
+  setTypeExpense = () => this.setState({ formType: 'expense' });
+  setTypeIncome = () => this.setState({ formType: 'income', formPhoto: null });
+
+  applyQuickAdd = (q) => this.setState({ formName: q.name, formCategory: q.category, formAmount: String(q.amount) });
+
+  onPhotoChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => this.setState({ formPhoto: reader.result });
+    reader.readAsDataURL(file);
+  };
+
+  onBudgetChange = (category, e) => {
+    const raw = e.target.value;
+    if (raw === '') {
+      this.setState(s => ({ budgets: { ...s.budgets, [category]: '' } }));
+      return;
+    }
+    const val = parseFloat(raw);
+    if (isNaN(val)) return;
+    this.setState(s => ({ budgets: { ...s.budgets, [category]: val } }));
+  };
+
+  onNewCategoryNameChange = (e) => this.setState({ newCategoryName: e.target.value });
+  onNewCategoryBudgetChange = (e) => this.setState({ newCategoryBudget: e.target.value });
+  onNewCategoryPeriodChange = (e) => this.setState({ newCategoryPeriod: e.target.value });
+  onNewCategoryCustomDaysChange = (e) => this.setState({ newCategoryCustomDays: e.target.value });
+  pickNewCategoryEmoji = (emoji) => this.setState({ newCategoryEmoji: emoji });
+  onNewCategoryEmojiChange = (e) => this.setState({ newCategoryEmoji: e.target.value });
+  addCategory = () => {
+    const name = this.state.newCategoryName.trim();
+    if (!name || this.state.budgets[name] !== undefined) return;
+    const budget = parseFloat(this.state.newCategoryBudget) || 0;
+    const emoji = this.state.newCategoryEmoji || '📦';
+    const period = this.state.newCategoryPeriod || 'monthly';
+    const customDays = Math.max(1, parseInt(this.state.newCategoryCustomDays, 10) || 7);
+    this.setState(s => ({
+      budgets: { ...s.budgets, [name]: budget },
+      categoryEmojis: { ...s.categoryEmojis, [name]: emoji },
+      budgetPeriods: { ...s.budgetPeriods, [name]: period },
+      budgetCustomDays: { ...s.budgetCustomDays, [name]: customDays },
+      newCategoryName: '', newCategoryBudget: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly', newCategoryCustomDays: '7',
+    }));
+  };
+  showRecentTab = () => this.setState({ homeInfoTab: 'recent' });
+  showCategoriesTab = () => this.setState({ homeInfoTab: 'categories' });
+
+  startEditEmoji = (name) => this.setState({ editingEmojiFor: this.state.editingEmojiFor === name ? null : name });
+  setCategoryPeriod = (name, period) => this.setState(s => ({ budgetPeriods: { ...s.budgetPeriods, [name]: period } }));
+
+  // Builds a Google Calendar "quick add" link with a recurring rule matching
+  // the category's own reset frequency. No API keys or sign-in needed - it
+  // just opens Calendar pre-filled; the person taps Save once and it becomes
+  // a real recurring event on their actual calendar from then on.
+  googleCalendarReminderUrl(category, period, customDays) {
+    const freqMap = {
+      daily: 'FREQ=DAILY',
+      weekday: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR',
+      weekly: 'FREQ=WEEKLY',
+      monthly: 'FREQ=MONTHLY',
+      yearly: 'FREQ=YEARLY',
+      custom: `FREQ=DAILY;INTERVAL=${customDays || 7}`,
+    };
+    const rrule = freqMap[period] || 'FREQ=MONTHLY';
+    const today = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const startDate = `${today.getFullYear()}${pad(today.getMonth() + 1)}${pad(today.getDate())}`;
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    const endDate = `${tomorrow.getFullYear()}${pad(tomorrow.getMonth() + 1)}${pad(tomorrow.getDate())}`;
+    const text = encodeURIComponent(`${category} budget reminder`);
+    const details = encodeURIComponent(`Reminder to check and log your ${category} spending.`);
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${startDate}/${endDate}&details=${details}&recur=RRULE:${rrule}`;
+  }
+  setCustomDays = (name, days) => {
+    if (days === '') {
+      this.setState(s => ({ budgetCustomDays: { ...s.budgetCustomDays, [name]: '' } }));
+      return;
+    }
+    const n = parseInt(days, 10);
+    if (isNaN(n) || n < 1) return;
+    this.setState(s => ({ budgetCustomDays: { ...s.budgetCustomDays, [name]: n } }));
+  };
+  pickEmojiFor = (name, emoji) => this.setState(s => ({ categoryEmojis: { ...s.categoryEmojis, [name]: emoji }, editingEmojiFor: null }));
+  onCategoryEmojiTextChange = (name, e) => {
+    const val = e.target.value;
+    if (!val) return;
+    this.setState(s => ({ categoryEmojis: { ...s.categoryEmojis, [name]: val }, editingEmojiFor: null }));
+  };
+
+  doDeleteCategory = (name) => this.setState(s => {
+    const budgets = { ...s.budgets };
+    delete budgets[name];
+    const categoryEmojis = { ...s.categoryEmojis };
+    delete categoryEmojis[name];
+    const budgetPeriods = { ...s.budgetPeriods };
+    delete budgetPeriods[name];
+    const budgetCustomDays = { ...s.budgetCustomDays };
+    delete budgetCustomDays[name];
+    const budgetRollovers = { ...s.budgetRollovers };
+    delete budgetRollovers[name];
+    const budgetLastPeriodKey = { ...s.budgetLastPeriodKey };
+    delete budgetLastPeriodKey[name];
+    return { budgets, categoryEmojis, budgetPeriods, budgetCustomDays, budgetRollovers, budgetLastPeriodKey };
+  });
+  removeCategory = (name) => this.confirmDelete('category', name, name);
+  onCategoryNameChange = (oldName, e) => {
+    const newName = e.target.value.trim();
+    if (!newName || newName === oldName || this.state.budgets[newName] !== undefined) {
+      this._render(); // reset the field's displayed text back to the authoritative name
+      return;
+    }
+    this.setState(s => {
+      const budgets = {};
+      Object.keys(s.budgets).forEach(k => { budgets[k === oldName ? newName : k] = s.budgets[k]; });
+      const categoryEmojis = {};
+      Object.keys(s.categoryEmojis).forEach(k => { categoryEmojis[k === oldName ? newName : k] = s.categoryEmojis[k]; });
+      const budgetPeriods = {};
+      Object.keys(s.budgetPeriods).forEach(k => { budgetPeriods[k === oldName ? newName : k] = s.budgetPeriods[k]; });
+      const budgetCustomDays = {};
+      Object.keys(s.budgetCustomDays).forEach(k => { budgetCustomDays[k === oldName ? newName : k] = s.budgetCustomDays[k]; });
+      const budgetRollovers = {};
+      Object.keys(s.budgetRollovers).forEach(k => { budgetRollovers[k === oldName ? newName : k] = s.budgetRollovers[k]; });
+      const budgetLastPeriodKey = {};
+      Object.keys(s.budgetLastPeriodKey).forEach(k => { budgetLastPeriodKey[k === oldName ? newName : k] = s.budgetLastPeriodKey[k]; });
+      const transactions = s.transactions.map(t => t.category === oldName ? { ...t, category: newName } : t);
+      return { budgets, categoryEmojis, budgetPeriods, budgetCustomDays, budgetRollovers, budgetLastPeriodKey, transactions };
+    });
+  };
+
+  onNewGoalNameChange = (e) => this.setState({ newGoalName: e.target.value });
+  onNewGoalTargetChange = (e) => this.setState({ newGoalTarget: e.target.value });
+  addSavingsGoal = () => {
+    const name = this.state.newGoalName.trim();
+    if (!name) return;
+    const target = parseFloat(this.state.newGoalTarget) || 0;
+    const id = 'g' + Date.now();
+    this.setState(s => ({ savingsGoals: [...s.savingsGoals, { id, name, saved: 0, target }], newGoalName: '', newGoalTarget: '' }));
+  };
+  doDeleteGoal = (id) => this.setState(s => ({ savingsGoals: s.savingsGoals.filter(g => g.id !== id) }));
+  removeSavingsGoal = (id) => {
+    const g = this.state.savingsGoals.find(g => g.id === id);
+    this.confirmDelete('goal', id, g ? g.name : 'this goal');
+  };
+  onSavingsGoalSavedChange = (id, e) => {
+    const raw = e.target.value;
+    if (raw === '') {
+      this.setState(s => ({ savingsGoals: s.savingsGoals.map(g => g.id === id ? { ...g, saved: '' } : g) }));
+      return;
+    }
+    const val = parseFloat(raw);
+    if (isNaN(val)) return;
+    this.setState(s => ({ savingsGoals: s.savingsGoals.map(g => g.id === id ? { ...g, saved: val } : g) }));
+  };
+  onSavingsGoalTargetChange = (id, e) => {
+    const raw = e.target.value;
+    if (raw === '') {
+      this.setState(s => ({ savingsGoals: s.savingsGoals.map(g => g.id === id ? { ...g, target: '' } : g) }));
+      return;
+    }
+    const val = parseFloat(raw);
+    if (isNaN(val)) return;
+    this.setState(s => ({ savingsGoals: s.savingsGoals.map(g => g.id === id ? { ...g, target: val } : g) }));
+  };
+
+  onFormDateChange = (e) => this.setState({ formDate: e.target.value });
+
+  submitExpense = () => {
+    const amt = parseFloat(this.state.formAmount) || 0;
+    if (amt <= 0) return;
+    const isIncome = this.state.formType === 'income';
+    const name = this.state.formName.trim() || (isIncome ? 'Income' : 'Expense');
+    const walletId = this.state.formWalletId || this.state.activeWalletId;
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const tx = {
+      id: Date.now(), name,
+      category: isIncome ? 'Income' : this.state.formCategory,
+      type: this.state.formType,
+      walletId,
+      amount: amt,
+      dateISO: this.state.formDate || todayISO,
+      photo: isIncome ? null : this.state.formPhoto,
+    };
+    this.setState(s => ({
+      wallets: s.wallets.map(w => w.id === walletId ? { ...w, balance: w.balance + (isIncome ? amt : -amt) } : w),
+      transactions: [tx, ...s.transactions],
+      formName: '', formAmount: '', formPhoto: null, formType: 'expense', formDate: todayISO, overlay: null,
+    }));
+  };
+
+  selectTx = (id) => this.setState({ selectedTxId: id, overlay: 'detail', editingTx: false });
+
+  startEditTx = () => {
+    const tx = this.state.transactions.find(t => t.id === this.state.selectedTxId);
+    if (!tx) return;
+    this.setState({
+      editingTx: true,
+      editTxName: tx.name,
+      editTxAmount: String(tx.amount),
+      editTxDate: tx.dateISO,
+      editTxWalletId: tx.walletId,
+      editTxCategory: tx.category,
+    });
+  };
+  cancelEditTx = () => this.setState({ editingTx: false });
+  onEditTxNameChange = (e) => this.setState({ editTxName: e.target.value });
+  onEditTxAmountChange = (e) => this.setState({ editTxAmount: e.target.value });
+  onEditTxDateChange = (e) => this.setState({ editTxDate: e.target.value });
+  onEditTxWalletChange = (e) => this.setState({ editTxWalletId: e.target.value });
+  onEditTxCategoryChange = (e) => this.setState({ editTxCategory: e.target.value });
+
+  saveEditTx = () => {
+    const newAmount = parseFloat(this.state.editTxAmount);
+    if (isNaN(newAmount) || newAmount <= 0) return;
+    const newName = this.state.editTxName.trim();
+    if (!newName) return;
+    this.setState(s => {
+      const tx = s.transactions.find(t => t.id === s.selectedTxId);
+      if (!tx) return {};
+      const sign = tx.type === 'income' ? 1 : -1;
+      let wallets = s.wallets.map(w => w.id === tx.walletId ? { ...w, balance: (parseFloat(w.balance) || 0) - sign * tx.amount } : w);
+      wallets = wallets.map(w => w.id === s.editTxWalletId ? { ...w, balance: (parseFloat(w.balance) || 0) + sign * newAmount } : w);
+      const updatedTx = {
+        ...tx, name: newName, amount: newAmount, dateISO: s.editTxDate || tx.dateISO,
+        walletId: s.editTxWalletId, category: tx.type === 'income' ? tx.category : s.editTxCategory,
+      };
+      return {
+        wallets,
+        transactions: s.transactions.map(t => t.id === s.selectedTxId ? updatedTx : t),
+        editingTx: false,
+      };
+    });
+  };
+
+  onSelectedCategoryChange = (e) => {
+    const cat = e.target.value;
+    this.setState(s => ({
+      transactions: s.transactions.map(t => t.id === s.selectedTxId ? { ...t, category: cat } : t),
+    }));
+  };
+
+  // === Delete confirmation ===
+  confirmDelete = (type, id, label) => this.setState({ pendingDelete: { type, id, label } });
+  cancelPendingDelete = () => this.setState({ pendingDelete: null });
+  executePendingDelete = () => {
+    const pd = this.state.pendingDelete;
+    if (!pd) return;
+    if (pd.type === 'transaction') this.doDeleteTransaction(pd.id);
+    else if (pd.type === 'wallet') this.doDeleteWallet(pd.id);
+    else if (pd.type === 'category') this.doDeleteCategory(pd.id);
+    else if (pd.type === 'goal') this.doDeleteGoal(pd.id);
+    else if (pd.type === 'recurring') this.doDeleteRecurring(pd.id);
+    else if (pd.type === 'receivable') this.doDeleteReceivable(pd.id);
+    else if (pd.type === 'autoDaily') this.doDeleteAutoDaily(pd.id);
+    this.setState({ pendingDelete: null });
+  };
+
+  askDeleteSelectedTx = () => {
+    const tx = this.state.transactions.find(t => t.id === this.state.selectedTxId);
+    if (!tx) return;
+    this.confirmDelete('transaction', tx.id, tx.name);
+  };
+  doDeleteTransaction = (id) => this.setState(s => {
+    const tx = s.transactions.find(t => t.id === id);
+    if (!tx) return { overlay: null, selectedTxId: null };
+    const sign = tx.type === 'income' ? -1 : 1;
+    return {
+      wallets: s.wallets.map(w => w.id === tx.walletId ? { ...w, balance: w.balance + sign * tx.amount } : w),
+      transactions: s.transactions.filter(t => t.id !== id),
+      overlay: null, selectedTxId: null,
+    };
+  });
+
+  exportBackup = () => {
+    const data = {};
+    PERSIST_KEYS.forEach(k => data[k] = this.state[k]);
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.href = url; a.download = `expense-tracker-backup-${stamp}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+  onImportBackupFile = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!data || typeof data !== 'object' || !Array.isArray(data.transactions)) {
+          this.setState({ importError: 'That file doesn\'t look like a valid backup.' });
+          return;
+        }
+        this.setState({ ...DEFAULT_STATE, ...data, overlay: null, importError: null });
+      } catch (err) {
+        this.setState({ importError: 'Could not read that file — is it a valid backup JSON?' });
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  exportCSV = () => {
+    const rows = [['Date', 'Name', 'Category', 'Type', 'Wallet', 'Amount']];
+    const walletName = (id) => (this.state.wallets.find(w => w.id === id) || {}).name || id;
+    this.state.transactions.forEach(t => {
+      rows.push([t.dateISO, t.name, t.category, t.type, walletName(t.walletId), t.amount.toFixed(2)]);
+    });
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'transactions.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  barColorFor(pct) {
+    if (pct >= 90) return '#c0392b';
+    if (pct >= 60) return '#d99a1b';
+    return '#2f9e44';
+  }
+
+  // Health coloring for savings progress: the closer to the goal, the
+  // healthier (green); far from it reads as "almost empty" (red).
+  savingsColorFor(pct) {
+    if (pct >= 66) return '#2f9e44';
+    if (pct >= 33) return '#d99a1b';
+    return '#c0392b';
+  }
+
+  renderVals() {
+    const { tab, overlay, transactions, budgets, wallets, activeWalletId, selectedTxId, searchQuery, notificationsOn, darkMode, formType } = this.state;
+
+    const withLabel = transactions.map(t => {
+      const isExpense = t.type !== 'income';
+      return {
+        ...t, isExpense,
+        amountLabel: t.amount.toFixed(2),
+        dateLabel: formatDateLabel(t.dateISO),
+        signedAmountLabel: (isExpense ? '-₱' : '+₱') + t.amount.toFixed(2),
+        amountColor: isExpense ? 'var(--color-text)' : '#1e7a34',
+        emoji: t.type === 'income' ? '💰' : (this.state.categoryEmojis[t.category] || '📦'),
+        bgImage: t.photo ? `url(${t.photo})` : 'none',
+        iconDisplay: t.photo ? 'display:none' : 'display:flex',
+        photoDisplay: t.photo ? 'block' : 'none',
+        select: () => this.selectTx(t.id),
+      };
+    });
+    const q = searchQuery.trim().toLowerCase();
+    const filtered = q ? withLabel.filter(t => t.name.toLowerCase().includes(q) || t.category.toLowerCase().includes(q)) : withLabel;
+    const recentPreview = withLabel.slice(0, 8);
+    const hasMoreThanPreview = withLabel.length > recentPreview.length;
+    const selectedTxBase = withLabel.find(t => t.id === selectedTxId) || null;
+    const selectedTx = selectedTxBase ? { ...selectedTxBase, photoDisplay: selectedTxBase.photo ? 'block' : 'none' } : null;
+
+    const categoryNames = Object.keys(budgets);
+    const spendTodayISO = new Date().toISOString().slice(0, 10);
+    const spendByCategory = {};
+    categoryNames.forEach(c => spendByCategory[c] = 0);
+    transactions.forEach(t => {
+      if (t.type === 'income') return;
+      const period = this.state.budgetPeriods[t.category] || 'monthly';
+      const customDays = parseInt(this.state.budgetCustomDays[t.category], 10) || 7;
+      const inScope = periodKeyFor(t.dateISO, period, customDays) === periodKeyFor(spendTodayISO, period, customDays);
+      if (inScope) spendByCategory[t.category] = (spendByCategory[t.category] || 0) + t.amount;
+    });
+
+    const categories = categoryNames.map(name => {
+      const spent = spendByCategory[name] || 0;
+      const budget = budgets[name];
+      const budgetNum = parseFloat(budget) || 0;
+      const rollover = this.state.budgetRollovers[name] || 0;
+      const effectiveBudget = budgetNum + rollover;
+      const period = this.state.budgetPeriods[name] || 'monthly';
+      const customDays = parseInt(this.state.budgetCustomDays[name], 10) || 7;
+      const customDaysRaw = this.state.budgetCustomDays[name] !== undefined ? this.state.budgetCustomDays[name] : 7;
+      const pct = effectiveBudget > 0 ? Math.min(100, (spent / effectiveBudget) * 100) : 0;
+      return {
+        name, spent, budget, period, customDays, customDaysRaw,
+        rollover, rolloverLabel: rollover.toFixed(2), hasRollover: rollover > 0,
+        isSavingRollover: this.state.savingRolloverFor === name,
+        toggleSaveRolloverPicker: () => this.toggleSaveRolloverPicker(name),
+        rolloverWalletOptions: wallets.map(w => ({ id: w.id, name: w.name, apply: () => this.saveCategoryRolloverToWallet(name, w.id) })),
+        periodLabel: period === 'custom' ? `Every ${customDays}d` : ({ daily: 'Daily', weekday: 'Weekdays', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' }[period] || 'Monthly'),
+        isCustomPeriod: period === 'custom',
+        onPeriodChange: (e) => this.setCategoryPeriod(name, e.target.value),
+        onCustomDaysChange: (e) => this.setCustomDays(name, e.target.value),
+        calendarReminderUrl: this.googleCalendarReminderUrl(name, period, customDays),
+        spentLabel: spent.toFixed(2),
+        budgetLabel: effectiveBudget.toFixed(2),
+        pctLabel: pct.toFixed(0) + '%',
+        barColor: this.barColorFor(pct),
+        iconPath: CATEGORY_ICONS[name] || CATEGORY_ICONS.Other,
+        emoji: this.state.categoryEmojis[name] || '📦',
+        isEditingEmoji: this.state.editingEmojiFor === name,
+        startEditEmoji: () => this.startEditEmoji(name),
+        emojiOptions: EMOJI_PALETTE.map(e => ({
+          emoji: e,
+          pick: () => this.pickEmojiFor(name, e),
+          highlight: (this.state.categoryEmojis[name] || '📦') === e ? 'border-color: var(--color-accent); background: var(--color-accent-100);' : '',
+        })),
+        onEmojiTextChange: (e) => this.onCategoryEmojiTextChange(name, e),
+        onBudgetChange: (e) => this.onBudgetChange(name, e),
+        onNameChange: (e) => this.onCategoryNameChange(name, e),
+        remove: () => this.removeCategory(name),
+      };
+    });
+
+    const totalSpent = Object.values(spendByCategory).reduce((a, b) => a + b, 0);
+    const activeCategories = categories.filter(c => c.spent > 0);
+    const categoryOptions = categoryNames.map(name => ({ name, emoji: this.state.categoryEmojis[name] || '📦' }));
+    const sortedByCat = [...categories].filter(c => c.spent > 0).sort((a, b) => b.spent - a.spent);
+    const ramp = ['var(--color-accent-900)', 'var(--color-accent-700)', 'var(--color-accent-600)', 'var(--color-accent-500)', 'var(--color-accent-400)', 'var(--color-accent-300)'];
+    const analyticsRows = sortedByCat.map((c, i) => ({ name: c.name, spentLabel: c.spentLabel, color: ramp[i % ramp.length] }));
+    const analyticsBars = sortedByCat.map((c, i) => ({ pct: totalSpent > 0 ? (c.spent / totalSpent) * 100 : 0, color: ramp[i % ramp.length] }));
+    const topCategory = sortedByCat[0] ? { name: sortedByCat[0].name, pctLabel: totalSpent > 0 ? ((sortedByCat[0].spent / totalSpent) * 100).toFixed(0) : '0' } : null;
+
+    const budgetAlerts = categories.filter(c => c.budget > 0 && (c.spent / c.budget) >= 0.8).map(c => ({
+      categoryName: c.name,
+      title: `${c.name} budget at ${c.pctLabel}`,
+      detail: `₱${Math.max(0, c.budget - c.spent).toFixed(2)} left for the month.`,
+      color: c.barColor,
+    }));
+
+    // Month-over-month comparison for Analytics
+    const now = new Date();
+    const currentMonthKey = now.toISOString().slice(0, 7);
+    const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const prevMonthKey = prevMonthDate.toISOString().slice(0, 7);
+    let thisMonthSpend = 0, lastMonthSpend = 0;
+    transactions.forEach(t => {
+      if (t.type === 'income') return;
+      const mk = t.dateISO.slice(0, 7);
+      if (mk === currentMonthKey) thisMonthSpend += t.amount;
+      else if (mk === prevMonthKey) lastMonthSpend += t.amount;
+    });
+    let monthChangePct = null;
+    if (lastMonthSpend > 0) monthChangePct = ((thisMonthSpend - lastMonthSpend) / lastMonthSpend) * 100;
+    else if (thisMonthSpend > 0) monthChangePct = 100;
+    const monthChangeIsUp = monthChangePct !== null && monthChangePct > 0;
+    const monthChangeLabel = monthChangePct === null ? '—' : (monthChangePct >= 0 ? '+' : '') + monthChangePct.toFixed(0) + '%';
+    // Spending more than last month reads as the "worse" direction, hence red for up.
+    const monthChangeColor = monthChangePct === null ? 'var(--color-neutral-600)' : (monthChangeIsUp ? '#c0392b' : '#2f9e44');
+
+    const monthTotals = {};
+    transactions.forEach(t => {
+      if (t.type === 'income') return;
+      const label = formatMonthLabel(t.dateISO);
+      monthTotals[label] = (monthTotals[label] || 0) + t.amount;
+    });
+    const monthlyHistory = Object.keys(monthTotals)
+      .sort((a, b) => new Date(b) - new Date(a))
+      .map(label => ({ label, totalLabel: monthTotals[label].toFixed(2) }));
+
+    const activeWallet = wallets.find(w => w.id === activeWalletId) || wallets[0];
+    const totalBalance = wallets.reduce((sum, w) => sum + (parseFloat(w.balance) || 0), 0);
+
+    const receivablesRender = this.state.receivables.map(r => ({
+      ...r,
+      amountLabel: (parseFloat(r.amount) || 0).toFixed(2),
+      settledLabel: r.settled ? 'Paid' : 'Still owed',
+      nameStrike: r.settled ? 'text-decoration: line-through; opacity: 0.5;' : '',
+      toggleBg: r.settled ? 'var(--color-accent)' : 'var(--color-neutral-300)',
+      toggleSide: r.settled ? 'right' : 'left',
+      toggleSettled: () => this.toggleReceivableSettled(r.id),
+      remove: () => this.removeReceivable(r.id),
+    }));
+    const totalReceivable = this.state.receivables.filter(r => !r.settled).reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+
+    const nameTrimmed = (this.state.userName || '').trim();
+    const greeting = nameTrimmed ? `Hello, ${nameTrimmed}` : 'Home';
+
+
+    const savingsGoalsRender = this.state.savingsGoals.map(g => {
+      const saved = parseFloat(g.saved) || 0;
+      const target = parseFloat(g.target) || 0;
+      const pct = target > 0 ? Math.min(100, (saved / target) * 100) : 0;
+      return {
+        ...g,
+        pctLabel: pct.toFixed(0) + '%',
+        barColor: this.savingsColorFor(pct),
+        onSavedChange: (e) => this.onSavingsGoalSavedChange(g.id, e),
+        onTargetChange: (e) => this.onSavingsGoalTargetChange(g.id, e),
+        remove: () => this.removeSavingsGoal(g.id),
+      };
+    });
+    const totalSaved = this.state.savingsGoals.reduce((sum, g) => sum + (parseFloat(g.saved) || 0), 0);
+    const walletsRender = wallets.map(w => ({
+      ...w,
+      balanceLabel: (parseFloat(w.balance) || 0).toFixed(2),
+      bg: w.id === activeWalletId ? 'var(--color-accent)' : 'none',
+      color: w.id === activeWalletId ? 'var(--color-bg)' : 'var(--color-text)',
+      select: () => this.switchWallet(w.id),
+      onBalanceChange: (e) => this.onWalletBalanceChangeFor(w.id, e),
+      remove: () => this.removeWallet(w.id),
+      isEditingBalance: this.state.editingWalletId === w.id,
+      startEdit: () => this.startEditWallet(w.id),
+      stopEdit: () => this.stopEditWallet(),
+    }));
+
+    const quickAdds = QUICK_ADDS.map(q => ({ label: `${q.name} · ₱${q.amount}`, apply: () => this.applyQuickAdd(q) }));
+
+    const accent = 'var(--color-accent)';
+    const muted = 'var(--color-neutral-600)';
+    const darkVars = '--color-bg:#15171a;--color-surface:#1c1f23;--color-text:#eef0f2;--color-divider:#2c2f34;--color-neutral-100:#1a1c1f;--color-neutral-200:#242730;--color-neutral-300:#33363d;--color-neutral-400:#4b4f57;--color-neutral-500:#6a6e77;--color-neutral-600:#9195a0;--color-neutral-700:#b5b9c2;--color-accent-100:#173832;';
+
+    const viewModel = {
+      themeStyle: darkMode ? darkVars : '',
+      showOnboarding: this.state.showOnboarding,
+      finishOnboarding: this.finishOnboarding,
+      isHome: tab === 'home', isAnalytics: tab === 'analytics', isSavings: tab === 'savings', isSettings: tab === 'settings',
+      goHome: this.goHome, goAnalytics: this.goAnalytics, goSavings: this.goSavings, goSettings: this.goSettings,
+      tabHomeColor: tab === 'home' ? accent : muted,
+      tabAnalyticsColor: tab === 'analytics' ? accent : muted,
+      tabSavingsColor: tab === 'savings' ? accent : muted,
+      tabSettingsColor: tab === 'settings' ? accent : muted,
+      wallets: walletsRender,
+      totalBalanceLabel: totalBalance.toFixed(2),
+      greeting,
+      userName: this.state.userName,
+      onUserNameChange: this.onUserNameChange,
+      defaultWalletId: this.state.defaultWalletId,
+      onDefaultWalletChange: this.onDefaultWalletChange,
+      receivables: receivablesRender,
+      totalReceivableLabel: totalReceivable.toFixed(2),
+      totalReceivableRaw: totalReceivable,
+      overlayIsReceivables: overlay === 'receivables',
+      openOverlay_receivables: () => this.openOverlay('receivables'),
+      newReceivableName: this.state.newReceivableName,
+      newReceivableAmount: this.state.newReceivableAmount,
+      newReceivableNote: this.state.newReceivableNote,
+      onNewReceivableNameChange: this.onNewReceivableNameChange,
+      onNewReceivableAmountChange: this.onNewReceivableAmountChange,
+      onNewReceivableNoteChange: this.onNewReceivableNoteChange,
+      addReceivable: this.addReceivable,
+      activeWalletName: activeWallet.name,
+      activeWalletBalance: activeWallet.balance,
+      isRecentTab: this.state.homeInfoTab !== 'categories',
+      isCategoriesTab: this.state.homeInfoTab === 'categories',
+      showRecentTab: this.showRecentTab,
+      showCategoriesTab: this.showCategoriesTab,
+      recentTabColor: this.state.homeInfoTab !== 'categories' ? 'var(--color-text)' : 'var(--color-neutral-500)',
+      categoriesTabColor: this.state.homeInfoTab === 'categories' ? 'var(--color-text)' : 'var(--color-neutral-500)',
+      onWalletBalanceChange: this.onWalletBalanceChange,
+      openOverlay_wallets: () => this.openOverlay('wallets'),
+      openOverlay_history: () => this.openOverlay('history'),
+      openTransfer: this.openTransfer,
+      overlayIsTransfer: overlay === 'transfer',
+      transferFromId: this.state.transferFromId,
+      transferToId: this.state.transferToId,
+      transferAmount: this.state.transferAmount,
+      onTransferFromChange: this.onTransferFromChange,
+      onTransferToChange: this.onTransferToChange,
+      onTransferAmountChange: this.onTransferAmountChange,
+      submitTransfer: this.submitTransfer,
+      newWalletName: this.state.newWalletName,
+      newWalletBalance: this.state.newWalletBalance,
+      onNewWalletNameChange: this.onNewWalletNameChange,
+      onNewWalletBalanceChange: this.onNewWalletBalanceChange,
+      addWallet: this.addWallet,
+      transactions: withLabel,
+      recentPreview,
+      hasMoreThanPreview,
+      filteredTransactions: filtered,
+      searchQuery,
+      onSearchChange: this.onSearchChange,
+      categories,
+      activeCategories,
+      categoryNames,
+      categoryOptions,
+      totalSpentLabel: totalSpent.toFixed(2),
+      activeCategoryCount: sortedByCat.length,
+      analyticsRows,
+      analyticsBars,
+      topCategory,
+      budgetAlerts,
+      thisMonthSpendLabel: thisMonthSpend.toFixed(2),
+      lastMonthSpendLabel: lastMonthSpend.toFixed(2),
+      monthChangeLabel,
+      monthChangeColor,
+      monthlyHistory,
+      monthlyHistoryPreview: monthlyHistory.slice(0, 3),
+      notificationsOn,
+      notifToggleBg: notificationsOn ? 'var(--color-accent)' : 'var(--color-neutral-300)',
+      notifToggleSide: notificationsOn ? 'right' : 'left',
+      toggleNotifications: this.toggleNotifications,
+      darkToggleBg: darkMode ? 'var(--color-accent)' : 'var(--color-neutral-300)',
+      darkToggleSide: darkMode ? 'right' : 'left',
+      toggleDarkMode: this.toggleDarkMode,
+      exportCSV: this.exportCSV,
+      exportBackup: this.exportBackup,
+      onImportBackupFile: this.onImportBackupFile,
+      importError: this.state.importError,
+      savingsGoals: savingsGoalsRender,
+      totalSavedLabel: totalSaved.toFixed(2),
+      newGoalName: this.state.newGoalName,
+      newGoalTarget: this.state.newGoalTarget,
+      onNewGoalNameChange: this.onNewGoalNameChange,
+      onNewGoalTargetChange: this.onNewGoalTargetChange,
+      addSavingsGoal: this.addSavingsGoal,
+      newCategoryName: this.state.newCategoryName,
+      newCategoryBudget: this.state.newCategoryBudget,
+      newCategoryPeriod: this.state.newCategoryPeriod,
+      onNewCategoryPeriodChange: this.onNewCategoryPeriodChange,
+      newCategoryCustomDays: this.state.newCategoryCustomDays,
+      onNewCategoryCustomDaysChange: this.onNewCategoryCustomDaysChange,
+      isNewCategoryCustom: this.state.newCategoryPeriod === 'custom',
+      newCategoryEmoji: this.state.newCategoryEmoji || '📦',
+      onNewCategoryNameChange: this.onNewCategoryNameChange,
+      onNewCategoryBudgetChange: this.onNewCategoryBudgetChange,
+      onNewCategoryEmojiChange: this.onNewCategoryEmojiChange,
+      emojiPalette: EMOJI_PALETTE.map(e => ({
+        emoji: e,
+        pick: () => this.pickNewCategoryEmoji(e),
+        highlight: (this.state.newCategoryEmoji || '📦') === e ? 'border-color: var(--color-accent); background: var(--color-accent-100);' : '',
+      })),
+      addCategory: this.addCategory,
+      overlayX: overlay ? '0%' : '100%',
+      overlayIsNotifications: overlay === 'notifications',
+      overlayIsSearch: overlay === 'search',
+      overlayIsBudgets: overlay === 'budgets',
+      overlayIsRecurring: overlay === 'recurring',
+      recurringBills: this.state.recurringBills.map(b => ({
+        ...b,
+        amountLabel: (parseFloat(b.amount) || 0).toFixed(2),
+        walletName: (wallets.find(w => w.id === b.walletId) || {}).name || '—',
+        toggleBg: b.active ? 'var(--color-accent)' : 'var(--color-neutral-300)',
+        toggleSide: b.active ? 'right' : 'left',
+        toggleActive: () => this.toggleRecurringActive(b.id),
+        remove: () => this.removeRecurringBill(b.id),
+      })),
+      newRecurringName: this.state.newRecurringName,
+      newRecurringAmount: this.state.newRecurringAmount,
+      newRecurringDay: this.state.newRecurringDay,
+      newRecurringCategory: this.state.newRecurringCategory,
+      onNewRecurringNameChange: this.onNewRecurringNameChange,
+      onNewRecurringAmountChange: this.onNewRecurringAmountChange,
+      onNewRecurringDayChange: this.onNewRecurringDayChange,
+      onNewRecurringCategoryChange: this.onNewRecurringCategoryChange,
+      addRecurringBill: this.addRecurringBill,
+      autoDailyExpenses: this.state.autoDailyExpenses.map(a => ({
+        ...a,
+        amountLabel: (parseFloat(a.amount) || 0).toFixed(2),
+        emoji: this.state.categoryEmojis[a.category] || '📦',
+        walletName: (wallets.find(w => w.id === a.walletId) || {}).name || '—',
+        frequencyLabel: a.frequency === 'custom' ? `Every ${a.customDays || 7}d` : ({ daily: 'Every day', weekday: 'Weekdays only', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' }[a.frequency] || 'Every day'),
+        remove: () => this.removeAutoDailyExpense(a.id),
+      })),
+      newAutoDailyCategory: this.state.newAutoDailyCategory,
+      newAutoDailyAmount: this.state.newAutoDailyAmount,
+      newAutoDailyWalletId: this.state.newAutoDailyWalletId,
+      newAutoDailyFrequency: this.state.newAutoDailyFrequency,
+      newAutoDailyCustomDays: this.state.newAutoDailyCustomDays,
+      isNewAutoDailyCustom: this.state.newAutoDailyFrequency === 'custom',
+      onNewAutoDailyCategoryChange: this.onNewAutoDailyCategoryChange,
+      onNewAutoDailyAmountChange: this.onNewAutoDailyAmountChange,
+      onNewAutoDailyWalletChange: this.onNewAutoDailyWalletChange,
+      onNewAutoDailyFrequencyChange: this.onNewAutoDailyFrequencyChange,
+      onNewAutoDailyCustomDaysChange: this.onNewAutoDailyCustomDaysChange,
+      addAutoDailyExpense: this.addAutoDailyExpense,
+      hasAutoDailyExpenses: this.state.autoDailyExpenses.length > 0,
+      overlayIsWallets: overlay === 'wallets',
+      overlayIsHistory: overlay === 'history',
+      overlayIsAdd: overlay === 'add',
+      overlayIsDetail: overlay === 'detail',
+      selectedTx,
+      onSelectedCategoryChange: this.onSelectedCategoryChange,
+      closeOverlay: this.closeOverlay,
+      openOverlay_notifications: () => this.openOverlay('notifications'),
+      openOverlay_search: () => this.openOverlay('search'),
+      openOverlay_budgets: () => this.openOverlay('budgets'),
+      openOverlay_recurring: () => this.openOverlay('recurring'),
+      openOverlay_add: () => this.openOverlay('add'),
+      formName: this.state.formName,
+      formAmount: this.state.formAmount,
+      formCategory: this.state.formCategory,
+      formWalletId: this.state.formWalletId || activeWalletId,
+      formDate: this.state.formDate,
+      onFormDateChange: this.onFormDateChange,
+      formTypeIsExpense: formType === 'expense',
+      formTypeIsIncome: formType === 'income',
+      addingNewCategory: this.state.addingNewCategory,
+      confirmNewCategoryInline: this.confirmNewCategoryInline,
+      cancelNewCategoryInline: this.cancelNewCategoryInline,
+      setTypeExpense: this.setTypeExpense,
+      setTypeIncome: this.setTypeIncome,
+      formPhoto: this.state.formPhoto,
+      formPhotoBg: this.state.formPhoto ? `url(${this.state.formPhoto})` : 'none',
+      formPhotoDisplay: this.state.formPhoto ? 'block' : 'none',
+      onPhotoChange: this.onPhotoChange,
+      quickAdds,
+      submitLabel: formType === 'income' ? 'Add to balance' : 'Subtract from balance',
+      onFormNameChange: this.onFormNameChange,
+      onFormAmountChange: this.onFormAmountChange,
+      onFormCategoryChange: this.onFormCategoryChange,
+      onFormWalletChange: this.onFormWalletChange,
+      submitExpense: this.submitExpense,
+      deleteSelected: this.askDeleteSelectedTx,
+      editingTx: this.state.editingTx,
+      startEditTx: this.startEditTx,
+      cancelEditTx: this.cancelEditTx,
+      saveEditTx: this.saveEditTx,
+      editTxName: this.state.editTxName,
+      editTxAmount: this.state.editTxAmount,
+      editTxDate: this.state.editTxDate,
+      editTxWalletId: this.state.editTxWalletId,
+      editTxCategory: this.state.editTxCategory,
+      onEditTxNameChange: this.onEditTxNameChange,
+      onEditTxAmountChange: this.onEditTxAmountChange,
+      onEditTxDateChange: this.onEditTxDateChange,
+      onEditTxWalletChange: this.onEditTxWalletChange,
+      onEditTxCategoryChange: this.onEditTxCategoryChange,
+      pendingDelete: this.state.pendingDelete,
+      pendingRolloverDecision: this.state.pendingRolloverDecisions[0] ? {
+        ...this.state.pendingRolloverDecisions[0],
+        amountLabel: this.state.pendingRolloverDecisions[0].amount.toFixed(2),
+        addToBudget: () => this.rolloverAddToBudget(this.state.pendingRolloverDecisions[0].id),
+        walletOptions: this.state.wallets.map(w => ({
+          id: w.id, name: w.name,
+          apply: () => this.rolloverSaveToWallet(this.state.pendingRolloverDecisions[0].id, w.id),
+        })),
+        goalOptions: this.state.savingsGoals.map(g => ({
+          id: g.id, name: g.name,
+          apply: () => this.rolloverAddToGoal(this.state.pendingRolloverDecisions[0].id, g.id),
+        })),
+        hasGoals: this.state.savingsGoals.length > 0,
+      } : null,
+      pendingRolloverCount: this.state.pendingRolloverDecisions.length,
+      hasMoreRollovers: this.state.pendingRolloverDecisions.length > 1,
+      rolloverHistory: this.state.rolloverHistory.slice(0, 15).map(h => ({
+        ...h, amountLabel: h.amount.toFixed(2),
+      })),
+      hasRolloverHistory: this.state.rolloverHistory.length > 0,
+      cancelPendingDelete: this.cancelPendingDelete,
+      executePendingDelete: this.executePendingDelete,
+    };
+    this.maybeSendNotifications(budgetAlerts);
+    return viewModel;
+  }
+}
+
+</script>
+<script>
+  const templateEl = document.getElementById('app-template');
+  const rootEl = document.getElementById('app-root');
+  let renderFn;
+  const app = new Component(() => renderFn());
+  renderFn = mountApp(templateEl, rootEl, () => app.renderVals());
+  renderFn();
+  window.__app = app;
+</script>
+</body>
+</html>
