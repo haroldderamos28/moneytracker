@@ -635,12 +635,30 @@
                 <div class="card-title" style="font-size: 14px;">Add an automatic daily expense</div>
                 <div class="field">
                   <label>Category</label>
-                  <sc-raw-select class="input" value="{{ newAutoDailyCategory }}" sc-camel-on-change="{{ onNewAutoDailyCategoryChange }}">
-                    <option value="">Choose a category</option>
-                    <sc-for list="{{ categoryOptions }}" as="opt" hint-placeholder-count="6">
-                      <option value="{{ opt.name }}">{{ opt.emoji }} {{ opt.name }}</option>
-                    </sc-for>
-                  </sc-raw-select>
+                  <sc-if value="{{ addingNewCategory }}" hint-placeholder-val="{{ false }}">
+                    <div style="display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2);">
+                      <div style="width: 40px; height: 40px; flex: none; background: var(--color-neutral-100); display: flex; align-items: center; justify-content: center; font-size: 20px;">{{ newCategoryEmoji }}</div>
+                      <input class="input" type="text" placeholder="New category name" value="{{ newCategoryName }}" sc-camel-on-change="{{ onNewCategoryNameChange }}" style="flex: 1;">
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--space-2);">
+                      <sc-for list="{{ emojiPalette }}" as="e" hint-placeholder-count="20">
+                        <button type="button" sc-camel-on-click="{{ e.pick }}" style="width: 30px; height: 30px; font-size: 15px; background: var(--color-neutral-100); border: 1px solid var(--color-divider); cursor: pointer; display: flex; align-items: center; justify-content: center; {{ e.highlight }}">{{ e.emoji }}</button>
+                      </sc-for>
+                    </div>
+                    <div style="display: flex; gap: var(--space-2);">
+                      <button class="btn btn-primary" style="flex: 1; height: 40px;" sc-camel-on-click="{{ confirmNewCategoryInline }}">Add</button>
+                      <button class="btn btn-secondary" style="flex: none; height: 40px; padding: 0 14px;" sc-camel-on-click="{{ cancelNewCategoryInline }}">Cancel</button>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ !addingNewCategory }}" hint-placeholder-val="{{ true }}">
+                    <sc-raw-select class="input" value="{{ newAutoDailyCategory }}" sc-camel-on-change="{{ onNewAutoDailyCategoryChange }}">
+                      <option value="">Choose a category</option>
+                      <sc-for list="{{ categoryOptions }}" as="opt" hint-placeholder-count="6">
+                        <option value="{{ opt.name }}">{{ opt.emoji }} {{ opt.name }}</option>
+                      </sc-for>
+                      <option value="__new__">+ Add new category</option>
+                    </sc-raw-select>
+                  </sc-if>
                 </div>
                 <div class="field">
                   <label>Amount per occurrence</label>
@@ -1470,6 +1488,7 @@ class Component {
       newCategoryEmoji: '',
       newCategoryPeriod: 'monthly',
       newCategoryCustomDays: '7',
+      newCategoryTarget: 'form',
       addingNewCategory: false,
       editingEmojiFor: null,
       editingWalletId: null,
@@ -1788,7 +1807,6 @@ class Component {
   // Once created, an entry's category/amount/wallet/frequency are locked and
   // cannot be edited - only deleted outright - so the deduction can't be
   // casually changed.
-  onNewAutoDailyCategoryChange = (e) => this.setState({ newAutoDailyCategory: e.target.value });
   onNewAutoDailyAmountChange = (e) => this.setState({ newAutoDailyAmount: e.target.value });
   onNewAutoDailyWalletChange = (e) => this.setState({ newAutoDailyWalletId: e.target.value });
   onNewAutoDailyFrequencyChange = (e) => this.setState({ newAutoDailyFrequency: e.target.value });
@@ -1803,7 +1821,8 @@ class Component {
     const id = 'auto' + Date.now();
     const todayISO = new Date().toISOString().slice(0, 10);
     this.setState(s => {
-      const entry = { id, category, amount, walletId, frequency, customDays, createdAt: todayISO };
+      const currentKey = periodKeyFor(todayISO, frequency, customDays);
+      const entry = { id, category, amount, walletId, frequency, customDays, createdAt: todayISO, lastAppliedKey: currentKey };
       const wallets = s.wallets.map(w => w.id === walletId ? { ...w, balance: (parseFloat(w.balance) || 0) - amount } : w);
       const tx = {
         id: Date.now() + 1, name: category, category, type: 'expense', walletId,
@@ -1833,24 +1852,24 @@ class Component {
     const todayISO = new Date().toISOString().slice(0, 10);
     let wallets = this.state.wallets;
     const newTxs = [];
-    this.state.autoDailyExpenses.forEach(a => {
+    const updatedEntries = this.state.autoDailyExpenses.map(a => {
       const frequency = a.frequency || 'daily';
       const customDays = a.customDays || 7;
       const currentKey = periodKeyFor(todayISO, frequency, customDays);
-      const alreadyApplied = this.state.transactions.some(t =>
-        t.autoDailyExpenseId === a.id && periodKeyFor(t.dateISO, frequency, customDays) === currentKey
-      );
-      if (alreadyApplied) return;
+      if (a.lastAppliedKey === currentKey) return a; // already handled this period - deleting the resulting transaction doesn't undo that
       const amt = parseFloat(a.amount) || 0;
-      if (amt <= 0) return;
+      if (amt <= 0) return { ...a, lastAppliedKey: currentKey };
       wallets = wallets.map(w => w.id === a.walletId ? { ...w, balance: (parseFloat(w.balance) || 0) - amt } : w);
       newTxs.push({
         id: Date.now() + Math.floor(Math.random() * 1000), name: a.category, category: a.category,
         type: 'expense', walletId: a.walletId, amount: amt, dateISO: todayISO, photo: null, autoDailyExpenseId: a.id,
       });
+      return { ...a, lastAppliedKey: currentKey };
     });
     if (newTxs.length) {
-      this.state = { ...this.state, wallets, transactions: [...newTxs, ...this.state.transactions] };
+      this.state = { ...this.state, wallets, autoDailyExpenses: updatedEntries, transactions: [...newTxs, ...this.state.transactions] };
+    } else {
+      this.state = { ...this.state, autoDailyExpenses: updatedEntries };
     }
   }
 
@@ -1910,10 +1929,18 @@ class Component {
   onFormCategoryChange = (e) => {
     const val = e.target.value;
     if (val === '__new__') {
-      this.setState({ addingNewCategory: true, newCategoryName: '' });
+      this.setState({ addingNewCategory: true, newCategoryName: '', newCategoryTarget: 'form' });
       return;
     }
     this.setState({ formCategory: val });
+  };
+  onNewAutoDailyCategoryChange = (e) => {
+    const val = e.target.value;
+    if (val === '__new__') {
+      this.setState({ addingNewCategory: true, newCategoryName: '', newCategoryTarget: 'autoDaily' });
+      return;
+    }
+    this.setState({ newAutoDailyCategory: val });
   };
   confirmNewCategoryInline = () => {
     const name = this.state.newCategoryName.trim();
@@ -1921,16 +1948,18 @@ class Component {
     const emoji = this.state.newCategoryEmoji || '📦';
     const period = this.state.newCategoryPeriod || 'monthly';
     const customDays = Math.max(1, parseInt(this.state.newCategoryCustomDays, 10) || 7);
+    const target = this.state.newCategoryTarget || 'form';
+    const targetField = target === 'autoDaily' ? 'newAutoDailyCategory' : 'formCategory';
     if (this.state.budgets[name] === undefined) {
       this.setState(s => ({
         budgets: { ...s.budgets, [name]: 0 },
         categoryEmojis: { ...s.categoryEmojis, [name]: emoji },
         budgetPeriods: { ...s.budgetPeriods, [name]: period },
         budgetCustomDays: { ...s.budgetCustomDays, [name]: customDays },
-        formCategory: name, addingNewCategory: false, newCategoryName: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly', newCategoryCustomDays: '7',
+        [targetField]: name, addingNewCategory: false, newCategoryName: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly', newCategoryCustomDays: '7',
       }));
     } else {
-      this.setState({ formCategory: name, addingNewCategory: false, newCategoryName: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly', newCategoryCustomDays: '7' });
+      this.setState({ [targetField]: name, addingNewCategory: false, newCategoryName: '', newCategoryEmoji: '', newCategoryPeriod: 'monthly', newCategoryCustomDays: '7' });
     }
   };
   cancelNewCategoryInline = () => this.setState({ addingNewCategory: false, newCategoryName: '' });
