@@ -961,16 +961,16 @@
                   <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ pendingRolloverDecision.addToBudget }}">Add to budget</button>
                 </div>
                 <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-neutral-600); margin-top: var(--space-2);">Or save to a wallet</div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; flex-direction: column; gap: 8px;">
                   <sc-for list="{{ pendingRolloverDecision.walletOptions }}" as="w" hint-placeholder-count="3">
-                    <button class="btn btn-secondary btn-block" style="height: 40px; font-size: 13px;" sc-camel-on-click="{{ w.apply }}">{{ w.name }}</button>
+                    <button type="button" sc-camel-on-click="{{ w.apply }}" style="height: 44px; padding: 0 14px; border-radius: var(--radius-md); border: 1px solid var(--color-divider); background: var(--color-neutral-100); color: var(--color-text); font-family: var(--font-heading); font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;">{{ w.name }}</button>
                   </sc-for>
                 </div>
                 <sc-if value="{{ pendingRolloverDecision.hasGoals }}" hint-placeholder-val="{{ false }}">
                   <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-neutral-600); margin-top: var(--space-2);">Or put toward a goal</div>
-                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <div style="display: flex; flex-direction: column; gap: 8px;">
                     <sc-for list="{{ pendingRolloverDecision.goalOptions }}" as="g" hint-placeholder-count="3">
-                      <button class="btn btn-secondary btn-block" style="height: 40px; font-size: 13px;" sc-camel-on-click="{{ g.apply }}">{{ g.name }}</button>
+                      <button type="button" sc-camel-on-click="{{ g.apply }}" style="height: 44px; padding: 0 14px; border-radius: var(--radius-md); border: 1px solid var(--color-divider); background: var(--color-neutral-100); color: var(--color-text); font-family: var(--font-heading); font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;">{{ g.name }}</button>
                     </sc-for>
                   </div>
                 </sc-if>
