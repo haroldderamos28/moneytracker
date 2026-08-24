@@ -485,6 +485,10 @@
                         </sc-raw-select>
                       </div>
                     </div>
+                    <a href="{{ cat.calendarReminderUrl }}" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: var(--color-accent); text-decoration: none; margin-top: 6px;">
+                      <svg width="11" height="11" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                      Add reminder to Google Calendar
+                    </a>
                     <sc-if value="{{ cat.hasRollover }}" hint-placeholder-val="{{ false }}">
                       <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--color-divider);">
                         <div style="font-size: 11px; color: #2f9e44;">+₱{{ cat.rolloverLabel }} rolled over, added to this budget</div>
@@ -2012,6 +2016,30 @@ class Component {
 
   startEditEmoji = (name) => this.setState({ editingEmojiFor: this.state.editingEmojiFor === name ? null : name });
   setCategoryPeriod = (name, period) => this.setState(s => ({ budgetPeriods: { ...s.budgetPeriods, [name]: period } }));
+
+  // Builds a Google Calendar "quick add" link with a recurring rule matching
+  // the category's own reset frequency. No API keys or sign-in needed - it
+  // just opens Calendar pre-filled; the person taps Save once and it becomes
+  // a real recurring event on their actual calendar from then on.
+  googleCalendarReminderUrl(category, period, customDays) {
+    const freqMap = {
+      daily: 'FREQ=DAILY',
+      weekday: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR',
+      weekly: 'FREQ=WEEKLY',
+      monthly: 'FREQ=MONTHLY',
+      yearly: 'FREQ=YEARLY',
+      custom: `FREQ=DAILY;INTERVAL=${customDays || 7}`,
+    };
+    const rrule = freqMap[period] || 'FREQ=MONTHLY';
+    const today = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const startDate = `${today.getFullYear()}${pad(today.getMonth() + 1)}${pad(today.getDate())}`;
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    const endDate = `${tomorrow.getFullYear()}${pad(tomorrow.getMonth() + 1)}${pad(tomorrow.getDate())}`;
+    const text = encodeURIComponent(`${category} budget reminder`);
+    const details = encodeURIComponent(`Reminder to check and log your ${category} spending.`);
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${startDate}/${endDate}&details=${details}&recur=RRULE:${rrule}`;
+  }
   setCustomDays = (name, days) => {
     if (days === '') {
       this.setState(s => ({ budgetCustomDays: { ...s.budgetCustomDays, [name]: '' } }));
@@ -2325,6 +2353,7 @@ class Component {
         isCustomPeriod: period === 'custom',
         onPeriodChange: (e) => this.setCategoryPeriod(name, e.target.value),
         onCustomDaysChange: (e) => this.setCustomDays(name, e.target.value),
+        calendarReminderUrl: this.googleCalendarReminderUrl(name, period, customDays),
         spentLabel: spent.toFixed(2),
         budgetLabel: effectiveBudget.toFixed(2),
         pctLabel: pct.toFixed(0) + '%',
