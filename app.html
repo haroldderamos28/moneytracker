@@ -609,6 +609,68 @@
                 <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ addRecurringBill }}">Add recurring bill</button>
               </div>
               <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: var(--space-3); text-align: center;">Bills are added automatically as a transaction the next time you open the app on or after their charge day each month.</div>
+
+              <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin: var(--space-6) 0 var(--space-2);">Daily automatic expenses</div>
+              <sc-if value="{{ hasAutoDailyExpenses }}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-4);">
+                  <sc-for list="{{ autoDailyExpenses }}" as="a" hint-placeholder-count="2">
+                    <div class="card elev-sm" style="padding: var(--space-3); flex-direction: row; align-items: center; gap: var(--space-3);">
+                      <div style="width: 30px; height: 30px; flex: none; background: var(--color-neutral-100); display: flex; align-items: center; justify-content: center; font-size: 15px;">{{ a.emoji }}</div>
+                      <div style="flex: 1;">
+                        <div style="font-size: 14px; font-weight: 600; font-family: var(--font-heading);">{{ a.category }}</div>
+                        <div style="font-size: 11px; color: var(--color-neutral-600);">₱{{ a.amountLabel }} · {{ a.frequencyLabel }} · from {{ a.walletName }} · locked</div>
+                      </div>
+                      <button class="btn btn-secondary btn-icon" aria-label="Delete automatic expense" sc-camel-on-click="{{ a.remove }}" style="flex: none;">
+                        <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>
+                      </button>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <div class="card elev-sm" style="padding: var(--space-4); gap: var(--space-3);">
+                <div class="card-title" style="font-size: 14px;">Add an automatic daily expense</div>
+                <div class="field">
+                  <label>Category</label>
+                  <sc-raw-select class="input" value="{{ newAutoDailyCategory }}" sc-camel-on-change="{{ onNewAutoDailyCategoryChange }}">
+                    <option value="">Choose a category</option>
+                    <sc-for list="{{ categoryOptions }}" as="opt" hint-placeholder-count="6">
+                      <option value="{{ opt.name }}">{{ opt.emoji }} {{ opt.name }}</option>
+                    </sc-for>
+                  </sc-raw-select>
+                </div>
+                <div class="field">
+                  <label>Amount per occurrence</label>
+                  <input class="input" type="number" placeholder="0.00" value="{{ newAutoDailyAmount }}" sc-camel-on-change="{{ onNewAutoDailyAmountChange }}">
+                </div>
+                <div class="field">
+                  <label>Repeats</label>
+                  <sc-raw-select class="input" value="{{ newAutoDailyFrequency }}" sc-camel-on-change="{{ onNewAutoDailyFrequencyChange }}">
+                    <option value="daily">Every day</option>
+                    <option value="weekday">Weekdays only</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                    <option value="custom">Custom</option>
+                  </sc-raw-select>
+                </div>
+                <sc-if value="{{ isNewAutoDailyCustom }}" hint-placeholder-val="{{ false }}">
+                  <div class="field">
+                    <label>Every how many days</label>
+                    <input class="input" type="number" min="1" placeholder="7" value="{{ newAutoDailyCustomDays }}" sc-camel-on-change="{{ onNewAutoDailyCustomDaysChange }}">
+                  </div>
+                </sc-if>
+                <div class="field">
+                  <label>Pull from</label>
+                  <sc-raw-select class="input" value="{{ newAutoDailyWalletId }}" sc-camel-on-change="{{ onNewAutoDailyWalletChange }}">
+                    <option value="">Choose a wallet</option>
+                    <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="3">
+                      <option value="{{ w.id }}">{{ w.name }}</option>
+                    </sc-for>
+                  </sc-raw-select>
+                </div>
+                <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ addAutoDailyExpense }}">Add automatic expense</button>
+              </div>
+              <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: var(--space-3); text-align: center;">Once added, the amount, category, and wallet can't be edited — only deleted entirely.</div>
             </div>
           </sc-if>
 
@@ -1293,6 +1355,7 @@ const DEFAULT_STATE = {
   notificationsOn: true,
   homeInfoTab: 'recent',
   recurringBills: [],
+  autoDailyExpenses: [],
   receivables: [],
   userName: '',
   notifiedThisMonth: {},
@@ -1321,7 +1384,7 @@ function loadPersisted() {
     return { ...DEFAULT_STATE, ...parsed, budgets, categoryEmojis, _categoriesMigratedV2: true };
   } catch (e) { return DEFAULT_STATE; }
 }
-const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'defaultWalletId', 'budgets', 'budgetPeriods', 'budgetCustomDays', 'budgetRollovers', 'budgetLastPeriodKey', 'pendingRolloverDecisions', 'rolloverHistory', 'categoryEmojis', 'transactions', 'notificationsOn', 'savingsGoals', 'homeInfoTab', 'recurringBills', 'receivables', 'userName', 'notifiedThisMonth', '_categoriesMigratedV2'];
+const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'defaultWalletId', 'budgets', 'budgetPeriods', 'budgetCustomDays', 'budgetRollovers', 'budgetLastPeriodKey', 'pendingRolloverDecisions', 'rolloverHistory', 'categoryEmojis', 'transactions', 'notificationsOn', 'savingsGoals', 'homeInfoTab', 'recurringBills', 'autoDailyExpenses', 'receivables', 'userName', 'notifiedThisMonth', '_categoriesMigratedV2'];
 
 function formatDateLabel(iso) {
   const d = new Date(iso + 'T00:00:00');
@@ -1421,12 +1484,18 @@ class Component {
       newRecurringAmount: '',
       newRecurringDay: '1',
       newRecurringCategory: '',
+      newAutoDailyCategory: '',
+      newAutoDailyAmount: '',
+      newAutoDailyWalletId: '',
+      newAutoDailyFrequency: 'daily',
+      newAutoDailyCustomDays: '7',
       newReceivableName: '',
       newReceivableAmount: '',
       newReceivableNote: '',
       importError: null,
     };
     this.checkAndApplyRecurring();
+    this.checkAndApplyAutoDailyExpenses();
     this.checkAndApplyRollovers();
     this.persist(); // lock in the one-time category migration flag (and any recurring bills applied just now)
   }
@@ -1710,6 +1779,76 @@ class Component {
       receivables: s.receivables.map(x => x.id === id ? { ...x, settled: !r.settled } : x),
     };
   });
+
+  // === Automatic daily expenses (e.g. a daily allowance) ===
+  // Once created, an entry's category/amount/wallet/frequency are locked and
+  // cannot be edited - only deleted outright - so the deduction can't be
+  // casually changed.
+  onNewAutoDailyCategoryChange = (e) => this.setState({ newAutoDailyCategory: e.target.value });
+  onNewAutoDailyAmountChange = (e) => this.setState({ newAutoDailyAmount: e.target.value });
+  onNewAutoDailyWalletChange = (e) => this.setState({ newAutoDailyWalletId: e.target.value });
+  onNewAutoDailyFrequencyChange = (e) => this.setState({ newAutoDailyFrequency: e.target.value });
+  onNewAutoDailyCustomDaysChange = (e) => this.setState({ newAutoDailyCustomDays: e.target.value });
+  addAutoDailyExpense = () => {
+    const category = this.state.newAutoDailyCategory;
+    const amount = parseFloat(this.state.newAutoDailyAmount);
+    const walletId = this.state.newAutoDailyWalletId || this.state.activeWalletId;
+    const frequency = this.state.newAutoDailyFrequency || 'daily';
+    const customDays = Math.max(1, parseInt(this.state.newAutoDailyCustomDays, 10) || 7);
+    if (!category || isNaN(amount) || amount <= 0 || !walletId) return;
+    const id = 'auto' + Date.now();
+    const todayISO = new Date().toISOString().slice(0, 10);
+    this.setState(s => {
+      const entry = { id, category, amount, walletId, frequency, customDays, createdAt: todayISO };
+      const wallets = s.wallets.map(w => w.id === walletId ? { ...w, balance: (parseFloat(w.balance) || 0) - amount } : w);
+      const tx = {
+        id: Date.now() + 1, name: category, category, type: 'expense', walletId,
+        amount, dateISO: todayISO, photo: null, autoDailyExpenseId: id,
+      };
+      return {
+        autoDailyExpenses: [...s.autoDailyExpenses, entry],
+        wallets,
+        transactions: [tx, ...s.transactions],
+        newAutoDailyCategory: '', newAutoDailyAmount: '', newAutoDailyWalletId: '', newAutoDailyFrequency: 'daily', newAutoDailyCustomDays: '7',
+      };
+    });
+  };
+  doDeleteAutoDaily = (id) => this.setState(s => ({ autoDailyExpenses: s.autoDailyExpenses.filter(a => a.id !== id) }));
+  removeAutoDailyExpense = (id) => {
+    const a = this.state.autoDailyExpenses.find(a => a.id === id);
+    this.confirmDelete('autoDaily', id, a ? a.category : 'this automatic expense');
+  };
+
+  // Runs once when the app opens: makes sure every automatic expense has been
+  // deducted for its current period (day/weekday/week/month/year/custom cycle),
+  // without needing the person to add it by hand. Using the same period-key
+  // logic as budgets means a "weekdays only" entry naturally skips weekends:
+  // Saturday and Sunday share Friday's key, so if Friday's deduction already
+  // happened, the "already applied" check blocks it from firing again.
+  checkAndApplyAutoDailyExpenses() {
+    const todayISO = new Date().toISOString().slice(0, 10);
+    let wallets = this.state.wallets;
+    const newTxs = [];
+    this.state.autoDailyExpenses.forEach(a => {
+      const frequency = a.frequency || 'daily';
+      const customDays = a.customDays || 7;
+      const currentKey = periodKeyFor(todayISO, frequency, customDays);
+      const alreadyApplied = this.state.transactions.some(t =>
+        t.autoDailyExpenseId === a.id && periodKeyFor(t.dateISO, frequency, customDays) === currentKey
+      );
+      if (alreadyApplied) return;
+      const amt = parseFloat(a.amount) || 0;
+      if (amt <= 0) return;
+      wallets = wallets.map(w => w.id === a.walletId ? { ...w, balance: (parseFloat(w.balance) || 0) - amt } : w);
+      newTxs.push({
+        id: Date.now() + Math.floor(Math.random() * 1000), name: a.category, category: a.category,
+        type: 'expense', walletId: a.walletId, amount: amt, dateISO: todayISO, photo: null, autoDailyExpenseId: a.id,
+      });
+    });
+    if (newTxs.length) {
+      this.state = { ...this.state, wallets, transactions: [...newTxs, ...this.state.transactions] };
+    }
+  }
 
   openTransfer = () => {
     const other = this.state.wallets.find(w => w.id !== this.state.activeWalletId);
@@ -2052,6 +2191,7 @@ class Component {
     else if (pd.type === 'goal') this.doDeleteGoal(pd.id);
     else if (pd.type === 'recurring') this.doDeleteRecurring(pd.id);
     else if (pd.type === 'receivable') this.doDeleteReceivable(pd.id);
+    else if (pd.type === 'autoDaily') this.doDeleteAutoDaily(pd.id);
     this.setState({ pendingDelete: null });
   };
 
@@ -2435,6 +2575,27 @@ class Component {
       onNewRecurringDayChange: this.onNewRecurringDayChange,
       onNewRecurringCategoryChange: this.onNewRecurringCategoryChange,
       addRecurringBill: this.addRecurringBill,
+      autoDailyExpenses: this.state.autoDailyExpenses.map(a => ({
+        ...a,
+        amountLabel: (parseFloat(a.amount) || 0).toFixed(2),
+        emoji: this.state.categoryEmojis[a.category] || '📦',
+        walletName: (wallets.find(w => w.id === a.walletId) || {}).name || '—',
+        frequencyLabel: a.frequency === 'custom' ? `Every ${a.customDays || 7}d` : ({ daily: 'Every day', weekday: 'Weekdays only', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' }[a.frequency] || 'Every day'),
+        remove: () => this.removeAutoDailyExpense(a.id),
+      })),
+      newAutoDailyCategory: this.state.newAutoDailyCategory,
+      newAutoDailyAmount: this.state.newAutoDailyAmount,
+      newAutoDailyWalletId: this.state.newAutoDailyWalletId,
+      newAutoDailyFrequency: this.state.newAutoDailyFrequency,
+      newAutoDailyCustomDays: this.state.newAutoDailyCustomDays,
+      isNewAutoDailyCustom: this.state.newAutoDailyFrequency === 'custom',
+      onNewAutoDailyCategoryChange: this.onNewAutoDailyCategoryChange,
+      onNewAutoDailyAmountChange: this.onNewAutoDailyAmountChange,
+      onNewAutoDailyWalletChange: this.onNewAutoDailyWalletChange,
+      onNewAutoDailyFrequencyChange: this.onNewAutoDailyFrequencyChange,
+      onNewAutoDailyCustomDaysChange: this.onNewAutoDailyCustomDaysChange,
+      addAutoDailyExpense: this.addAutoDailyExpense,
+      hasAutoDailyExpenses: this.state.autoDailyExpenses.length > 0,
       overlayIsWallets: overlay === 'wallets',
       overlayIsHistory: overlay === 'history',
       overlayIsAdd: overlay === 'add',
