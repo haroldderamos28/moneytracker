@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v3'; // bump this every deploy
+const CACHE_VERSION = 'v4'; // bump this every deploy
 const CACHE_NAME = `financial-freedom-${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {
@@ -17,14 +17,23 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Stale-while-revalidate: show the cached version instantly (no waiting on
+// the network, so the app opens right away instead of freezing on the
+// launch icon), while fetching a fresh copy in the background to update the
+// cache for the *next* launch. First-ever load (nothing cached yet) still
+// waits on the network, same as before.
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        return response;
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.match(event.request).then((cachedResponse) => {
+        const fetchPromise = fetch(event.request)
+          .then((networkResponse) => {
+            cache.put(event.request, networkResponse.clone());
+            return networkResponse;
+          })
+          .catch(() => cachedResponse);
+        return cachedResponse || fetchPromise;
       })
-      .catch(() => caches.match(event.request)) // offline fallback only
+    )
   );
 });
