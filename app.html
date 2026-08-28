@@ -975,9 +975,19 @@
                 <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2);">Minus: remaining monthly category budgets</div>
                 <div class="card elev-sm" style="padding: 0; gap: 0; margin-bottom: var(--space-3);">
                   <sc-for list="{{ pendingCategoryBudgets }}" as="c" hint-placeholder-count="4">
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider);">
-                      <div style="font-size: 13px;">{{ c.emoji }} {{ c.name }}</div>
-                      <div style="font-size: 13px; font-weight: 600; color: #c0392b;">-₱{{ c.remainingLabel }}</div>
+                    <div style="padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider);">
+                      <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="font-size: 13px;">{{ c.emoji }} {{ c.name }}</div>
+                        <div style="display: flex; align-items: baseline; gap: 3px;">
+                          <span style="font-size: 13px; font-weight: 600; color: #c0392b;">-₱</span>
+                          <input type="number" value="{{ c.inputValue }}" sc-camel-on-change="{{ c.onOverrideChange }}" style="width: 64px; padding: 2px 4px; font-size: 13px; font-weight: 600; color: #c0392b; border: 1px solid var(--color-divider); background: var(--color-neutral-100); text-align: right;">
+                        </div>
+                      </div>
+                      <sc-if value="{{ c.isOverridden }}" hint-placeholder-val="{{ false }}">
+                        <div style="text-align: right; margin-top: 2px;">
+                          <a style="font-size: 10px; color: var(--color-accent); cursor: pointer;" sc-camel-on-click="{{ c.resetOverride }}">Reset to calculated</a>
+                        </div>
+                      </sc-if>
                     </div>
                   </sc-for>
                   <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); background: var(--color-neutral-100);">
@@ -985,6 +995,7 @@
                     <div style="font-size: 13px; font-weight: 700; color: #c0392b;">-₱{{ pendingCategoryBudgetsTotalLabel }}</div>
                   </div>
                 </div>
+                <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: -8px; margin-bottom: var(--space-3);">Editing these only changes this projection — your actual category budgets stay the same.</div>
               </sc-if>
 
               <sc-if value="{{ hasPendingReceivablesCalc }}" hint-placeholder-val="{{ false }}">
@@ -1307,6 +1318,21 @@
                   <button class="btn btn-secondary" style="flex: 1; height: 42px;" sc-camel-on-click="{{ cancelPendingDelete }}">Cancel</button>
                   <button class="btn btn-block" style="flex: 1; height: 42px; color: #fff; background: #c0392b; justify-content: center;" sc-camel-on-click="{{ executePendingDelete }}">Delete</button>
                 </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ pendingReceivablePayment }}" hint-placeholder-val="{{ false }}">
+            <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 999; padding: 24px; box-sizing: border-box;">
+              <div class="card elev-sm" style="padding: var(--space-5); max-width: 320px; width: 100%; gap: var(--space-3); background: var(--color-surface); max-height: 80vh; overflow-y: auto;">
+                <div style="font-size: 16px; font-weight: 700; font-family: var(--font-heading);">Mark {{ pendingReceivablePayment.personName }} as paid</div>
+                <div style="font-size: 13px; color: var(--color-neutral-600);">Which wallet should the ₱{{ pendingReceivablePayment.amountLabel }} go into?</div>
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: var(--space-2);">
+                  <sc-for list="{{ pendingReceivablePayment.walletOptions }}" as="w" hint-placeholder-count="3">
+                    <button type="button" sc-camel-on-click="{{ w.apply }}" style="height: 44px; padding: 0 14px; border-radius: var(--radius-md); border: 1px solid var(--color-divider); background: var(--color-neutral-100); color: var(--color-text); font-family: var(--font-heading); font-size: 14px; font-weight: 600; text-align: left; cursor: pointer;">{{ w.name }}</button>
+                  </sc-for>
+                </div>
+                <button class="btn btn-secondary btn-block" style="height: 40px; margin-top: var(--space-2);" sc-camel-on-click="{{ pendingReceivablePayment.cancel }}">Cancel</button>
               </div>
             </div>
           </sc-if>
@@ -1653,6 +1679,7 @@ const DEFAULT_STATE = {
   recurringBills: [],
   autoDailyExpenses: [],
   upcomingBills: [],
+  projectedOverrides: {},
   receivables: [],
   userName: '',
   notifiedThisMonth: {},
@@ -1681,7 +1708,7 @@ function loadPersisted() {
     return { ...DEFAULT_STATE, ...parsed, budgets, categoryEmojis, _categoriesMigratedV2: true };
   } catch (e) { return DEFAULT_STATE; }
 }
-const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'defaultWalletId', 'budgets', 'budgetPeriods', 'budgetCustomDays', 'budgetRollovers', 'budgetLastPeriodKey', 'pendingRolloverDecisions', 'rolloverHistory', 'categoryEmojis', 'transactions', 'notificationsOn', 'savingsGoals', 'homeInfoTab', 'recurringBills', 'autoDailyExpenses', 'upcomingBills', 'receivables', 'userName', 'notifiedThisMonth', '_categoriesMigratedV2'];
+const PERSIST_KEYS = ['showOnboarding', 'tab', 'darkMode', 'wallets', 'activeWalletId', 'defaultWalletId', 'budgets', 'budgetPeriods', 'budgetCustomDays', 'budgetRollovers', 'budgetLastPeriodKey', 'pendingRolloverDecisions', 'rolloverHistory', 'categoryEmojis', 'transactions', 'notificationsOn', 'savingsGoals', 'homeInfoTab', 'recurringBills', 'autoDailyExpenses', 'upcomingBills', 'projectedOverrides', 'receivables', 'userName', 'notifiedThisMonth', '_categoriesMigratedV2'];
 
 function formatDateLabel(iso) {
   const d = new Date(iso + 'T00:00:00');
@@ -1777,6 +1804,7 @@ class Component {
       editTxWalletId: null,
       editTxCategory: '',
       pendingDelete: null,
+      pendingReceivablePayment: null,
       transferFromId: null,
       transferToId: null,
       transferAmount: '',
@@ -2175,28 +2203,43 @@ class Component {
   };
   // Marking as paid credits your active wallet and logs an income transaction;
   // unmarking reverses that exact transaction so balances stay correct.
-  toggleReceivableSettled = (id) => this.setState(s => {
+  toggleReceivableSettled = (id) => {
+    const r = this.state.receivables.find(r => r.id === id);
+    if (!r) return;
+    if (r.settled) {
+      this.doUnsettleReceivable(id);
+    } else {
+      this.setState({ pendingReceivablePayment: { id, personName: r.personName, amount: r.amount } });
+    }
+  };
+  doUnsettleReceivable = (id) => this.setState(s => {
     const r = s.receivables.find(r => r.id === id);
     if (!r) return {};
     let wallets = s.wallets;
     let transactions = s.transactions;
-    if (!r.settled) {
-      const walletId = s.activeWalletId;
-      wallets = wallets.map(w => w.id === walletId ? { ...w, balance: (parseFloat(w.balance) || 0) + r.amount } : w);
-      transactions = [{
-        id: Date.now(), name: `${r.personName} paid you back`, category: 'Income', type: 'income',
-        walletId, amount: r.amount, dateISO: new Date().toISOString().slice(0, 10), photo: null, receivableId: r.id,
-      }, ...transactions];
-    } else {
-      const linkedTx = transactions.find(t => t.receivableId === r.id);
-      if (linkedTx) {
-        wallets = wallets.map(w => w.id === linkedTx.walletId ? { ...w, balance: (parseFloat(w.balance) || 0) - linkedTx.amount } : w);
-        transactions = transactions.filter(t => t.id !== linkedTx.id);
-      }
+    const linkedTx = transactions.find(t => t.receivableId === id);
+    if (linkedTx) {
+      wallets = wallets.map(w => w.id === linkedTx.walletId ? { ...w, balance: (parseFloat(w.balance) || 0) - linkedTx.amount } : w);
+      transactions = transactions.filter(t => t.id !== linkedTx.id);
     }
     return {
       wallets, transactions,
-      receivables: s.receivables.map(x => x.id === id ? { ...x, settled: !r.settled } : x),
+      receivables: s.receivables.map(x => x.id === id ? { ...x, settled: false } : x),
+    };
+  });
+  cancelReceivablePayment = () => this.setState({ pendingReceivablePayment: null });
+  confirmReceivablePayment = (walletId) => this.setState(s => {
+    const p = s.pendingReceivablePayment;
+    if (!p) return {};
+    const wallets = s.wallets.map(w => w.id === walletId ? { ...w, balance: (parseFloat(w.balance) || 0) + p.amount } : w);
+    const tx = {
+      id: Date.now(), name: `${p.personName} paid you back`, category: 'Income', type: 'income',
+      walletId, amount: p.amount, dateISO: new Date().toISOString().slice(0, 10), photo: null, receivableId: p.id,
+    };
+    return {
+      wallets, transactions: [tx, ...s.transactions],
+      receivables: s.receivables.map(x => x.id === p.id ? { ...x, settled: true } : x),
+      pendingReceivablePayment: null,
     };
   });
 
@@ -2444,6 +2487,15 @@ class Component {
 
   startEditEmoji = (name) => this.setState({ editingEmojiFor: this.state.editingEmojiFor === name ? null : name });
   setCategoryPeriod = (name, period) => this.setState(s => ({ budgetPeriods: { ...s.budgetPeriods, [name]: period } }));
+
+  // Adjusts what a category counts as in the Projected Balance calculator
+  // only - never touches the category's real budget amount.
+  setProjectedOverride = (name, value) => this.setState(s => ({ projectedOverrides: { ...s.projectedOverrides, [name]: value } }));
+  clearProjectedOverride = (name) => this.setState(s => {
+    const projectedOverrides = { ...s.projectedOverrides };
+    delete projectedOverrides[name];
+    return { projectedOverrides };
+  });
 
   // Builds a Google Calendar "quick add" link with a recurring rule matching
   // the category's own reset frequency. No API keys or sign-in needed - it
@@ -2878,8 +2930,18 @@ class Component {
       .filter(c => c.period === 'monthly')
       .map(c => {
         const effectiveBudget = parseFloat(c.budgetLabel) || 0; // already includes any rollover boost
-        const remaining = Math.max(0, effectiveBudget - c.spent);
-        return { name: c.name, emoji: c.emoji, remaining, remainingLabel: remaining.toFixed(2) };
+        const calculatedRemaining = Math.max(0, effectiveBudget - c.spent);
+        const overrideRaw = this.state.projectedOverrides[c.name];
+        const isOverridden = overrideRaw !== undefined;
+        const remaining = isOverridden ? (parseFloat(overrideRaw) || 0) : calculatedRemaining;
+        return {
+          name: c.name, emoji: c.emoji, remaining,
+          remainingLabel: remaining.toFixed(2),
+          inputValue: isOverridden ? overrideRaw : calculatedRemaining.toFixed(2),
+          isOverridden,
+          onOverrideChange: (e) => this.setProjectedOverride(c.name, e.target.value),
+          resetOverride: () => this.clearProjectedOverride(c.name),
+        };
       })
       .filter(c => c.remaining > 0);
     const pendingCategoryBudgetsTotal = pendingCategoryBudgets.reduce((sum, c) => sum + c.remaining, 0);
@@ -3208,6 +3270,12 @@ class Component {
       onEditTxWalletChange: this.onEditTxWalletChange,
       onEditTxCategoryChange: this.onEditTxCategoryChange,
       pendingDelete: this.state.pendingDelete,
+      pendingReceivablePayment: this.state.pendingReceivablePayment ? {
+        ...this.state.pendingReceivablePayment,
+        amountLabel: this.state.pendingReceivablePayment.amount.toFixed(2),
+        walletOptions: this.state.wallets.map(w => ({ id: w.id, name: w.name, apply: () => this.confirmReceivablePayment(w.id) })),
+        cancel: this.cancelReceivablePayment,
+      } : null,
       pendingRolloverDecision: this.state.pendingRolloverDecisions[0] ? {
         ...this.state.pendingRolloverDecisions[0],
         amountLabel: this.state.pendingRolloverDecisions[0].amount.toFixed(2),
