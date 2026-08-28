@@ -333,6 +333,10 @@
                     <div style="flex: 1; font-size: 14px;">Receivables</div>
                     <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
                   </div>
+                  <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); cursor: pointer;" sc-camel-on-click="{{ openOverlay_calculator }}">
+                    <div style="flex: 1; font-size: 14px;">Projected balance</div>
+                    <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
+                  </div>
                   <div style="display: flex; align-items: center; padding: var(--space-3) var(--space-4); cursor: pointer;" sc-camel-on-click="{{ openOverlay_history }}">
                     <div style="flex: 1; font-size: 14px;">History</div>
                     <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
@@ -913,6 +917,77 @@
                 <button class="btn btn-primary btn-block" style="height: 44px;" sc-camel-on-click="{{ addReceivable }}">Add</button>
               </div>
               <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: var(--space-3); text-align: center;">Marking someone as paid adds the amount to your active wallet automatically.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ overlayIsCalculator }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 58px 20px 24px; box-sizing: border-box;">
+              <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <button class="btn btn-secondary btn-icon" aria-label="Back" sc-camel-on-click="{{ closeOverlay }}">
+                  <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 style="margin: 0; font-size: 22px;">Projected balance</h2>
+              </div>
+              <div class="card elev-sm" style="padding: var(--space-5); margin-bottom: var(--space-4); background: var(--color-accent-100);">
+                <div class="card-kicker">What you'd have after everything</div>
+                <div style="font-family: var(--font-heading); font-weight: 800; font-size: 36px; color: {{ projectedBalanceColor }};">₱{{ projectedBalanceLabel }}</div>
+                <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: 4px;">Current balance, minus unpaid bills, plus money owed to you.</div>
+              </div>
+
+              <div class="card elev-sm" style="padding: var(--space-4); flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: var(--space-3);">
+                <div style="font-size: 14px; font-weight: 600;">Current total balance</div>
+                <div style="font-size: 15px; font-weight: 700;">₱{{ totalBalanceLabel }}</div>
+              </div>
+
+              <sc-if value="{{ hasPendingUpcoming }}" hint-placeholder-val="{{ false }}">
+                <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2);">Minus: unpaid upcoming bills</div>
+                <div class="card elev-sm" style="padding: 0; gap: 0; margin-bottom: var(--space-3);">
+                  <sc-for list="{{ pendingUpcomingBills }}" as="u" hint-placeholder-count="2">
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider);">
+                      <div style="font-size: 13px;">{{ u.name }}</div>
+                      <div style="font-size: 13px; font-weight: 600; color: #c0392b;">-₱{{ u.amountLabel }}</div>
+                    </div>
+                  </sc-for>
+                  <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); background: var(--color-neutral-100);">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--color-neutral-600);">Total</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #c0392b;">-₱{{ pendingUpcomingTotalLabel }}</div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ hasPendingRecurring }}" hint-placeholder-val="{{ false }}">
+                <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2);">Minus: recurring bills not yet charged this month</div>
+                <div class="card elev-sm" style="padding: 0; gap: 0; margin-bottom: var(--space-3);">
+                  <sc-for list="{{ pendingRecurringBills }}" as="b" hint-placeholder-count="2">
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider);">
+                      <div style="font-size: 13px;">{{ b.name }}</div>
+                      <div style="font-size: 13px; font-weight: 600; color: #c0392b;">-₱{{ b.amountLabel }}</div>
+                    </div>
+                  </sc-for>
+                  <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); background: var(--color-neutral-100);">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--color-neutral-600);">Total</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #c0392b;">-₱{{ pendingRecurringTotalLabel }}</div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ hasPendingReceivablesCalc }}" hint-placeholder-val="{{ false }}">
+                <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2);">Plus: money owed to you</div>
+                <div class="card elev-sm" style="padding: 0; gap: 0; margin-bottom: var(--space-3);">
+                  <sc-for list="{{ pendingReceivablesForCalc }}" as="r" hint-placeholder-count="2">
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider);">
+                      <div style="font-size: 13px;">{{ r.personName }}</div>
+                      <div style="font-size: 13px; font-weight: 600; color: #2f9e44;">+₱{{ r.amountLabel }}</div>
+                    </div>
+                  </sc-for>
+                  <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); background: var(--color-neutral-100);">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--color-neutral-600);">Total</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #2f9e44;">+₱{{ pendingReceivablesTotalLabel }}</div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: var(--space-2); text-align: center;">This is a snapshot based on what's tracked in the app right now — it updates automatically as bills, receivables, and balances change.</div>
             </div>
           </sc-if>
 
@@ -2765,6 +2840,26 @@ class Component {
     const activeWallet = wallets.find(w => w.id === activeWalletId) || wallets[0];
     const totalBalance = wallets.reduce((sum, w) => sum + (parseFloat(w.balance) || 0), 0);
 
+    // Projected balance: what's left after every known outstanding obligation
+    // is paid and every expected repayment comes in.
+    const currentMonthKeyForBills = new Date().toISOString().slice(0, 7);
+    const pendingUpcomingBills = this.state.upcomingBills
+      .filter(u => !u.applied)
+      .map(u => ({ ...u, amountLabel: (parseFloat(u.amount) || 0).toFixed(2) }));
+    const pendingUpcomingTotal = pendingUpcomingBills.reduce((sum, u) => sum + (parseFloat(u.amount) || 0), 0);
+
+    const pendingRecurringBills = this.state.recurringBills
+      .filter(b => b.active && b.lastAppliedMonth !== currentMonthKeyForBills)
+      .map(b => ({ ...b, amountLabel: (parseFloat(b.amount) || 0).toFixed(2) }));
+    const pendingRecurringTotal = pendingRecurringBills.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
+
+    const pendingReceivablesForCalc = this.state.receivables
+      .filter(r => !r.settled)
+      .map(r => ({ ...r, amountLabel: (parseFloat(r.amount) || 0).toFixed(2) }));
+    const pendingReceivablesTotal = pendingReceivablesForCalc.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+
+    const projectedBalance = totalBalance - pendingUpcomingTotal - pendingRecurringTotal + pendingReceivablesTotal;
+
     const receivablesRender = this.state.receivables.map(r => ({
       ...r,
       amountLabel: (parseFloat(r.amount) || 0).toFixed(2),
@@ -2830,6 +2925,19 @@ class Component {
       tabSettingsColor: tab === 'settings' ? accent : muted,
       wallets: walletsRender,
       totalBalanceLabel: totalBalance.toFixed(2),
+      overlayIsCalculator: overlay === 'calculator',
+      openOverlay_calculator: () => this.openOverlay('calculator'),
+      pendingUpcomingBills,
+      pendingUpcomingTotalLabel: pendingUpcomingTotal.toFixed(2),
+      hasPendingUpcoming: pendingUpcomingBills.length > 0,
+      pendingRecurringBills,
+      pendingRecurringTotalLabel: pendingRecurringTotal.toFixed(2),
+      hasPendingRecurring: pendingRecurringBills.length > 0,
+      pendingReceivablesForCalc,
+      pendingReceivablesTotalLabel: pendingReceivablesTotal.toFixed(2),
+      hasPendingReceivablesCalc: pendingReceivablesForCalc.length > 0,
+      projectedBalanceLabel: projectedBalance.toFixed(2),
+      projectedBalanceColor: projectedBalance < 0 ? '#c0392b' : 'var(--color-text)',
       greeting,
       userName: this.state.userName,
       onUserNameChange: this.onUserNameChange,
