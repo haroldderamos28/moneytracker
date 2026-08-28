@@ -931,7 +931,7 @@
               <div class="card elev-sm" style="padding: var(--space-5); margin-bottom: var(--space-4); background: var(--color-accent-100);">
                 <div class="card-kicker">What you'd have after everything</div>
                 <div style="font-family: var(--font-heading); font-weight: 800; font-size: 36px; color: {{ projectedBalanceColor }};">₱{{ projectedBalanceLabel }}</div>
-                <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: 4px;">Current balance, minus unpaid bills, plus money owed to you.</div>
+                <div style="font-size: 11px; color: var(--color-neutral-600); margin-top: 4px;">Current balance, minus unpaid bills and remaining monthly budgets, plus money owed to you.</div>
               </div>
 
               <div class="card elev-sm" style="padding: var(--space-4); flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: var(--space-3);">
@@ -967,6 +967,22 @@
                   <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); background: var(--color-neutral-100);">
                     <div style="font-size: 12px; font-weight: 600; color: var(--color-neutral-600);">Total</div>
                     <div style="font-size: 13px; font-weight: 700; color: #c0392b;">-₱{{ pendingRecurringTotalLabel }}</div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ hasPendingCategoryBudgets }}" hint-placeholder-val="{{ false }}">
+                <div style="font: 600 10px var(--font-heading); letter-spacing: .1em; text-transform: uppercase; color: var(--color-neutral-600); margin-bottom: var(--space-2);">Minus: remaining monthly category budgets</div>
+                <div class="card elev-sm" style="padding: 0; gap: 0; margin-bottom: var(--space-3);">
+                  <sc-for list="{{ pendingCategoryBudgets }}" as="c" hint-placeholder-count="4">
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider);">
+                      <div style="font-size: 13px;">{{ c.emoji }} {{ c.name }}</div>
+                      <div style="font-size: 13px; font-weight: 600; color: #c0392b;">-₱{{ c.remainingLabel }}</div>
+                    </div>
+                  </sc-for>
+                  <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); background: var(--color-neutral-100);">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--color-neutral-600);">Total</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #c0392b;">-₱{{ pendingCategoryBudgetsTotalLabel }}</div>
                   </div>
                 </div>
               </sc-if>
@@ -2858,7 +2874,17 @@ class Component {
       .map(r => ({ ...r, amountLabel: (parseFloat(r.amount) || 0).toFixed(2) }));
     const pendingReceivablesTotal = pendingReceivablesForCalc.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
 
-    const projectedBalance = totalBalance - pendingUpcomingTotal - pendingRecurringTotal + pendingReceivablesTotal;
+    const pendingCategoryBudgets = categories
+      .filter(c => c.period === 'monthly')
+      .map(c => {
+        const effectiveBudget = parseFloat(c.budgetLabel) || 0; // already includes any rollover boost
+        const remaining = Math.max(0, effectiveBudget - c.spent);
+        return { name: c.name, emoji: c.emoji, remaining, remainingLabel: remaining.toFixed(2) };
+      })
+      .filter(c => c.remaining > 0);
+    const pendingCategoryBudgetsTotal = pendingCategoryBudgets.reduce((sum, c) => sum + c.remaining, 0);
+
+    const projectedBalance = totalBalance - pendingUpcomingTotal - pendingRecurringTotal - pendingCategoryBudgetsTotal + pendingReceivablesTotal;
 
     const receivablesRender = this.state.receivables.map(r => ({
       ...r,
@@ -2933,6 +2959,9 @@ class Component {
       pendingRecurringBills,
       pendingRecurringTotalLabel: pendingRecurringTotal.toFixed(2),
       hasPendingRecurring: pendingRecurringBills.length > 0,
+      pendingCategoryBudgets,
+      pendingCategoryBudgetsTotalLabel: pendingCategoryBudgetsTotal.toFixed(2),
+      hasPendingCategoryBudgets: pendingCategoryBudgets.length > 0,
       pendingReceivablesForCalc,
       pendingReceivablesTotalLabel: pendingReceivablesTotal.toFixed(2),
       hasPendingReceivablesCalc: pendingReceivablesForCalc.length > 0,
